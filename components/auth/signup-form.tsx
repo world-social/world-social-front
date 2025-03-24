@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/api';
 
 // Function to generate a random UUID
-function generateUUID() {
+function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -18,10 +18,13 @@ function generateUUID() {
   });
 }
 
-export function SignUpForm() {
+export function SignUpForm({ onRegistered }: {
+  onRegistered: () => void;
+}): React.ReactElement {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [registered, setRegistered] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -65,6 +68,9 @@ export function SignUpForm() {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         // Redirect to home page
         router.push('/');
+        onRegistered();
+        // Optionally update state if you need it
+        setRegistered(true);
       } else {
         setError(response.error || 'Failed to create account');
       }
@@ -79,6 +85,13 @@ export function SignUpForm() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  // If needed, you can trigger onRegistered when the registered state changes:
+  useEffect(() => {
+    if (registered) {
+      onRegistered();
+    }
+  }, [registered, onRegistered]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -168,4 +181,4 @@ export function SignUpForm() {
       )}
     </Card>
   );
-} 
+}
