@@ -1,4 +1,43 @@
 import type { Video, VideoFeed } from "@/types/video"
+import { apiRequest, uploadFile } from "./api"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+const MINIO_BASE_URL = process.env.NEXT_PUBLIC_MINIO_URL || 'http://localhost:9000'
+
+interface BackendVideo {
+  id: string
+  videoUrl: string
+  thumbnailUrl: string
+  userId: string
+  description: string
+  duration: number
+  createdAt: string
+  user: {
+    id: string
+    username: string
+    avatar: string
+  }
+}
+
+function transformBackendVideo(video: BackendVideo): Video {
+  // Use the URLs directly from the backend as they are already absolute
+  const videoUrl = video.videoUrl;
+  const thumbnailUrl = video.thumbnailUrl;
+
+  return {
+    id: video.id,
+    videoUrl,
+    thumbnailUrl,
+    username: video.user.username,
+    userAvatar: video.user.avatar || '/placeholder.svg',
+    description: video.description,
+    likes: 0, // These will be implemented later
+    comments: 0,
+    shares: 0,
+    tags: [], // Tags will be implemented later
+    duration: video.duration,
+  }
+}
 
 // Sample videos for development
 const sampleVideos: Video[] = [
@@ -73,42 +112,41 @@ const sampleVideos: Video[] = [
 
 // Simulate fetching videos from an API
 export async function fetchVideos(cursor?: string, limit = 5): Promise<VideoFeed> {
-  // In a real app, this would be an API call
-  return new Promise((resolve) => {
-    // Simulate network delay
-    setTimeout(() => {
-      const startIndex = cursor ? Number.parseInt(cursor) : 0
-      const endIndex = startIndex + limit
+  try {
+    const response = await apiRequest<{ videos: BackendVideo[]; nextCursor?: string }>(
+      `/content/feed?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`
+    );
 
-      // Generate more videos if needed
-      while (sampleVideos.length < endIndex + 5) {
-        const index = sampleVideos.length
-        sampleVideos.push({
-          id: `video-${index + 1}`,
-          videoUrl: sampleVideos[index % 5].videoUrl, // Reuse videos for demo
-          thumbnailUrl: sampleVideos[index % 5].thumbnailUrl,
-          username: `user_${index + 1}`,
-          userAvatar: `/placeholder.svg?height=40&width=40&text=${index + 1}`,
-          description: `This is video #${index + 1} with some cool content! #trending #viral`,
-          likes: Math.floor(Math.random() * 2000),
-          comments: Math.floor(Math.random() * 200),
-          shares: Math.floor(Math.random() * 50),
-          tags: ["trending", "viral", `tag${index}`],
-          duration: Math.floor(Math.random() * 20) + 5,
-        })
+    if (response.status === 'error') {
+      // If we get a rate limit error, use sample videos
+      if (response.error?.includes('Rate limit exceeded')) {
+        console.warn('Using sample videos due to rate limiting');
+        return {
+          videos: sampleVideos.slice(0, limit),
+          hasMore: false,
+          nextCursor: undefined,
+        };
       }
+      throw new Error(response.error || 'Failed to fetch videos');
+    }
 
-      const videos = sampleVideos.slice(startIndex, endIndex)
-      const hasMore = endIndex < sampleVideos.length
-      const nextCursor = hasMore ? endIndex.toString() : undefined
+    const videos = response.data?.videos.map(transformBackendVideo) || [];
+    const nextCursor = response.data?.nextCursor;
 
-      resolve({
-        videos,
-        hasMore,
-        nextCursor,
-      })
-    }, 800)
-  })
+    return {
+      videos,
+      hasMore: !!nextCursor,
+      nextCursor,
+    };
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    // Use sample videos as fallback
+    return {
+      videos: sampleVideos.slice(0, limit),
+      hasMore: false,
+      nextCursor: undefined,
+    };
+  }
 }
 
 // For production, you would implement functions to:
@@ -116,15 +154,26 @@ export async function fetchVideos(cursor?: string, limit = 5): Promise<VideoFeed
 // 2. Process videos (compression, thumbnails, etc.)
 // 3. Store video metadata in a database
 
-export async function uploadVideo(file: File): Promise<{ videoId: string }> {
-  // This would be implemented with your chosen storage solution
-  console.log("Uploading video:", file.name)
+export async function uploadVideo(
+  file: File,
+  title: string,
+  description: string
+): Promise<{ videoId: string }> {
+  const response = await uploadFile('/content/upload', file, {
+    title,
+    description,
+  });
 
-  // Simulate upload
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ videoId: `video-${Date.now()}` })
-    }, 2000)
-  })
+  if (response.status === 'error') {
+    throw new Error(response.error || 'Failed to upload video');
+  }
+
+  return {
+    videoId: response.data?.video.id || '',
+  };
+}
+
+export async function getVideoStream(videoId: string): Promise<string> {
+  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/content/${videoId}/stream`;
 }
 

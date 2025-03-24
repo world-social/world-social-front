@@ -7,18 +7,20 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SocialWorld - Earn While You Scroll",
-  description: "A decentralized social network that rewards you for scrolling and watching videos",
-    generator: 'v0.dev'
+  title: "WorldSocial",
+  description: "A social platform for sharing and discovering videos",
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -27,15 +29,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <body className={inter.className} suppressHydrationWarning>
+        <ThemeProvider>
           {children}
         </ThemeProvider>
       </body>
     </html>
   )
 }
-
-
 
 import './globals.css'

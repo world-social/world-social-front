@@ -13,8 +13,10 @@ import { ProfileHeader } from "@/components/profile-header"
 import { MissionsPanel } from "@/components/missions-panel"
 import { LeaderboardPanel } from "@/components/leaderboard-panel"
 import { AchievementsPanel } from "@/components/achievements-panel"
+import { DailyBonusButton } from "@/components/daily-bonus-button"
 import { fetchVideos } from "@/lib/video-service"
 import { updateMissionProgress, updateAchievementProgress } from "@/lib/mission-service"
+import { mockLogin, isAuthenticated } from "@/lib/auth-service"
 import type { Video } from "@/types/video"
 
 export default function HomePage() {
@@ -25,8 +27,27 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true)
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined)
   const [showMissions, setShowMissions] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement | null>(null)
+
+  // Handle authentication
+  useEffect(() => {
+    const handleAuth = async () => {
+      if (!isAuthenticated()) {
+        try {
+          await mockLogin()
+          setIsLoggedIn(true)
+        } catch (error) {
+          console.error('Failed to login:', error)
+        }
+      } else {
+        setIsLoggedIn(true)
+      }
+    }
+
+    handleAuth()
+  }, [])
 
   // Function to add tokens based on watch time
   const addTokensForWatchTime = useCallback(async (seconds: number) => {
@@ -54,6 +75,8 @@ export default function HomePage() {
   // Initial load of videos
   useEffect(() => {
     const loadInitialVideos = async () => {
+      if (!isLoggedIn) return
+      
       setLoading(true)
       try {
         const feed = await fetchVideos()
@@ -68,11 +91,11 @@ export default function HomePage() {
     }
 
     loadInitialVideos()
-  }, [])
+  }, [isLoggedIn])
 
   // Load more videos when user scrolls to the bottom
   const loadMoreVideos = useCallback(async () => {
-    if (loading || !hasMore) return
+    if (loading || !hasMore || !isLoggedIn) return
 
     setLoading(true)
 
@@ -86,14 +109,14 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, nextCursor])
+  }, [loading, hasMore, nextCursor, isLoggedIn])
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
-        if (entry.isIntersecting && !loading && hasMore) {
+        if (entry.isIntersecting && !loading && hasMore && isLoggedIn) {
           loadMoreVideos()
         }
       },
@@ -109,14 +132,30 @@ export default function HomePage() {
         observerRef.current.disconnect()
       }
     }
-  }, [loadMoreVideos, loading, hasMore])
+  }, [loadMoreVideos, loading, hasMore, isLoggedIn])
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Welcome to WorldSocial</h1>
+          <p className="text-muted-foreground mb-4">Please wait while we log you in...</p>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }}></div>
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }}></div>
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }}></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between p-4">
-          <h1 className="text-xl font-bold">SocialWorld</h1>
+          <h1 className="text-xl font-bold">WorldSocial</h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setShowMissions(!showMissions)} className="relative">
               <Gift className="h-5 w-5" />
@@ -135,27 +174,27 @@ export default function HomePage() {
 
       {/* Missions Panel (Slide Down) */}
       {showMissions && (
-        <div className="p-4 border-b">
+        <div className="p-4 border-b mt-[65px]">
           <MissionsPanel onClaimReward={handleMissionReward} />
         </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 pt-[65px]">
         <Tabs defaultValue="feed" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 sticky top-[65px] z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <TabsList className="grid w-full grid-cols-4 sticky top-[65px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="discover">Descobrir</TabsTrigger>
+            <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="ranking">Ranking</TabsTrigger>
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="feed" className="h-[calc(100vh-8rem)]">
             <div className="px-4">
               {videos.length === 0 && !loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <p className="text-muted-foreground mb-4">Nenhum vídeo encontrado</p>
-                  <Button onClick={() => loadMoreVideos()}>Atualizar Feed</Button>
+                  <p className="text-muted-foreground mb-4">No videos found</p>
+                  <Button onClick={() => loadMoreVideos()}>Refresh Feed</Button>
                 </div>
               ) : (
                 videos.map((video, index) => (
@@ -182,7 +221,7 @@ export default function HomePage() {
                       ></div>
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Role para mais vídeos</span>
+                    <span className="text-sm text-muted-foreground">Scroll for more videos</span>
                   )}
                 </div>
               )}
@@ -190,7 +229,7 @@ export default function HomePage() {
               {/* End of content message */}
               {!hasMore && videos.length > 0 && (
                 <div className="py-8 text-center">
-                  <p className="text-muted-foreground">Você chegou ao fim do feed!</p>
+                  <p className="text-muted-foreground">You've reached the end of the feed!</p>
                   <Button
                     variant="outline"
                     className="mt-2"
@@ -201,7 +240,7 @@ export default function HomePage() {
                       loadMoreVideos()
                     }}
                   >
-                    Atualizar Feed
+                    Refresh Feed
                   </Button>
                 </div>
               )}
@@ -313,23 +352,8 @@ export default function HomePage() {
         </Tabs>
       </main>
 
-      {/* Footer Navigation */}
-      {activeTab === "feed" && (
-        <div className="sticky bottom-4 flex justify-center">
-          <Button
-            size="lg"
-            className="rounded-full shadow-lg"
-            onClick={() => {
-              setTokens((prev) => prev + 1)
-              updateMissionProgress("mission-1", 0.5)
-              updateAchievementProgress("achievement-4", 1)
-            }}
-          >
-            <Coins className="mr-2 h-4 w-4" />
-            Coletar Bônus Diário
-          </Button>
-        </div>
-      )}
+      {/* Daily Bonus Button */}
+      <DailyBonusButton onCollect={(amount) => setTokens(prev => prev + amount)} />
     </div>
   )
 }

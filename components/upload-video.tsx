@@ -19,8 +19,8 @@ interface UploadVideoProps {
 export function UploadVideo({ onUploadComplete, onCancel }: UploadVideoProps) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [tags, setTags] = useState("")
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -51,30 +51,14 @@ export function UploadVideo({ onUploadComplete, onCancel }: UploadVideoProps) {
     setUploading(true)
 
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          const newProgress = prev + 10
-          if (newProgress >= 100) {
-            clearInterval(progressInterval)
-            return 100
-          }
-          return newProgress
-        })
-      }, 500)
-
       // Upload the video
-      const { videoId } = await uploadVideo(file)
-
-      // Clear the interval
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+      const { videoId } = await uploadVideo(file, title, description)
 
       // Notify parent component
       onUploadComplete(videoId)
     } catch (error) {
       console.error("Error uploading video:", error)
-      alert("Failed to upload video. Please try again.")
+      alert(error instanceof Error ? error.message : "Failed to upload video. Please try again.")
     } finally {
       setUploading(false)
     }
@@ -125,23 +109,23 @@ export function UploadVideo({ onUploadComplete, onCancel }: UploadVideoProps) {
           )}
 
           <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              placeholder="Add a title to your video..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={uploading}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               placeholder="Add a description to your video..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={uploading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma separated)</Label>
-            <Input
-              id="tags"
-              placeholder="trending, viral, etc."
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
               disabled={uploading}
             />
           </div>
@@ -166,7 +150,7 @@ export function UploadVideo({ onUploadComplete, onCancel }: UploadVideoProps) {
         <Button variant="outline" onClick={handleCancel} disabled={uploading}>
           Cancel
         </Button>
-        <Button onClick={handleUpload} disabled={!file || uploading}>
+        <Button onClick={handleUpload} disabled={!file || !title || uploading}>
           {uploading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

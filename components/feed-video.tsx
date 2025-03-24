@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, MessageCircle, Share2, Coins, Play, Pause, Volume2, VolumeX } from "lucide-react"
 import type { Video } from "@/types/video"
 import { formatNumber } from "@/lib/utils"
+import { rewardWatchTime, rewardEngagement } from '@/lib/token-service'
 
 interface FeedVideoProps {
   video: Video
@@ -36,13 +37,11 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
         // Auto-play/pause based on visibility
         if (videoRef.current) {
           if (entry.isIntersecting) {
-            // Only autoplay if this is one of the first few videos
-            if (index < 2 && isLoaded) {
-              videoRef.current.play().catch(() => {
-                // Autoplay was prevented, show play button
-                setIsPlaying(false)
-              })
-            }
+            // Autoplay when visible
+            videoRef.current.play().catch(() => {
+              // Autoplay was prevented, show play button
+              setIsPlaying(false)
+            })
           } else {
             videoRef.current.pause()
             setIsPlaying(false)
@@ -61,13 +60,13 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
         observerRef.current.unobserve(containerRef.current)
       }
     }
-  }, [index, isLoaded])
+  }, [isLoaded]) // Remove index dependency since we want all videos to autoplay
 
   // Track actual watch time when video is playing and visible
   useEffect(() => {
     let watchTimer: NodeJS.Timeout
 
-    if (isPlaying && isVisible) {
+    if (isPlaying && isVisible && isLoaded) {
       watchTimer = setInterval(() => {
         setWatchTime((prev) => {
           const newTime = prev + 1
@@ -75,7 +74,12 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
           // Reward tokens every 3 seconds of actual watch time
           const shouldReward = newTime - lastRewardTime.current >= 3
           if (shouldReward) {
-            onWatchTime(3) // Reward for 3 seconds of watch time
+            // Call the token service to reward watch time
+            rewardWatchTime(video.id, 3).then((reward) => {
+              if (reward > 0) {
+                onWatchTime(reward)
+              }
+            }).catch(console.error)
             lastRewardTime.current = newTime
           }
 
@@ -87,14 +91,18 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
     return () => {
       if (watchTimer) clearInterval(watchTimer)
     }
-  }, [isPlaying, isVisible, onWatchTime])
+  }, [isPlaying, isVisible, isLoaded, onWatchTime, video.id])
 
   // Handle video events
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    const handlePlay = () => setIsPlaying(true)
+    const handlePlay = () => {
+      if (isLoaded) {
+        setIsPlaying(true)
+      }
+    }
     const handlePause = () => setIsPlaying(false)
     const handleEnded = () => {
       setIsPlaying(false)
@@ -104,7 +112,9 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
         video.play().catch((err) => console.log("Autoplay prevented:", err))
       }
     }
-    const handleLoadedData = () => setIsLoaded(true)
+    const handleLoadedData = () => {
+      setIsLoaded(true)
+    }
 
     video.addEventListener("play", handlePlay)
     video.addEventListener("pause", handlePause)
@@ -117,10 +127,23 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
       video.removeEventListener("ended", handleEnded)
       video.removeEventListener("loadeddata", handleLoadedData)
     }
-  }, [])
+  }, [isLoaded])
+
+  // Handle autoplay when video is loaded and visible
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !isLoaded) return
+
+    if (isVisible) {
+      video.play().catch(() => {
+        // Autoplay was prevented
+        setIsPlaying(false)
+      })
+    }
+  }, [isVisible, isLoaded])
 
   const togglePlay = () => {
-    if (videoRef.current) {
+    if (videoRef.current && isLoaded) {
       if (isPlaying) {
         videoRef.current.pause()
       } else {
@@ -133,17 +156,25 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
   }
 
   const toggleMute = () => {
-    if (videoRef.current) {
+    if (videoRef.current && isLoaded) {
       videoRef.current.muted = !isMuted
       setIsMuted(!isMuted)
     }
   }
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked)
-    if (!isLiked) {
-      // Reward tokens for engagement
-      onWatchTime(1)
+  const toggleLike = async () => {
+    if (isLoaded) {
+      setIsLiked(!isLiked)
+      if (!isLiked) {
+        try {
+          const reward = await rewardEngagement(video.id, 'LIKE')
+          if (reward > 0) {
+            onWatchTime(reward)
+          }
+        } catch (error) {
+          console.error('Error rewarding like:', error)
+        }
+      }
     }
   }
 
@@ -164,6 +195,7 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
             muted={isMuted}
             playsInline
             preload="metadata"
+            autoPlay
           >
             <source src={video.videoUrl} type="video/mp4" />
             Your browser does not support the video tag.
