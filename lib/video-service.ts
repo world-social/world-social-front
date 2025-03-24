@@ -19,9 +19,13 @@ interface BackendVideo {
 }
 
 function transformBackendVideo(video: BackendVideo): Video {
-  // Use the URLs directly from the backend as they are already absolute
-  const videoUrl = video.videoUrl;
-  const thumbnailUrl = video.thumbnailUrl;
+  // Get the full URLs from the backend
+  const videoUrl = video.videoUrl.startsWith('http') 
+    ? video.videoUrl 
+    : `${API_BASE_URL}/content/${video.id}/stream`;
+  const thumbnailUrl = video.thumbnailUrl.startsWith('http')
+    ? video.thumbnailUrl
+    : `${API_BASE_URL}/content/${video.id}/thumbnail`;
 
   return {
     id: video.id,
@@ -190,18 +194,31 @@ export async function fetchVideos(cursor?: string, limit = 5): Promise<VideoFeed
 export async function uploadVideo(
   file: File,
   title: string,
-  description: string
+  description: string,
+  onSuccess?: () => Promise<void>
 ): Promise<{ videoId: string }> {
   if (!(file instanceof File)) {
     throw new Error('Invalid file type. Expected a File object.');
   }
 
-  const response = await uploadFile(
-    file,
+  if (!title || !description) {
+    throw new Error('Title and description are required');
+  }
+
+  // Create FormData for file upload
+  const formData = new FormData();
+  formData.append('video', file);
+  formData.append('title', title);
+  formData.append('description', description);
+
+  const response = await apiRequest<{ video: { id: string } }>(
     '/content/upload',
     {
-      title,
-      description,
+      method: 'POST',
+      body: formData,
+      headers: {
+        // Don't set Content-Type header, let the browser set it with the boundary
+      }
     }
   );
 
@@ -209,12 +226,25 @@ export async function uploadVideo(
     throw new Error(response.error || 'Failed to upload video');
   }
 
+  if (!response.data?.video?.id) {
+    throw new Error('Invalid response from server');
+  }
+
+  // Call the onSuccess callback if provided
+  if (onSuccess) {
+    await onSuccess();
+  }
+
   return {
-    videoId: response.data?.video.id || '',
+    videoId: response.data.video.id
   };
 }
 
 export async function getVideoStream(videoId: string): Promise<string> {
-  return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/content/${videoId}/stream`;
+  return `${API_BASE_URL}/content/${videoId}/stream`;
+}
+
+export async function getVideoThumbnail(videoId: string): Promise<string> {
+  return `${API_BASE_URL}/content/${videoId}/thumbnail`;
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,9 +11,10 @@ import { toast } from "sonner"
 
 interface UploadVideoDialogProps {
   onUploadComplete: () => Promise<void>
+  onFeedRefresh?: () => Promise<void>
 }
 
-export function UploadVideoDialog({ onUploadComplete }: UploadVideoDialogProps) {
+export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVideoDialogProps) {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -74,6 +75,11 @@ export function UploadVideoDialog({ onUploadComplete }: UploadVideoDialogProps) 
 
       // Refresh profile
       await onUploadComplete()
+      
+      // Refresh feed if callback is provided
+      if (onFeedRefresh) {
+        await onFeedRefresh()
+      }
     } catch (error) {
       console.error("Error uploading video:", error)
       toast.error(error instanceof Error ? error.message : "Failed to upload video. Please try again.")
@@ -100,6 +106,9 @@ export function UploadVideoDialog({ onUploadComplete }: UploadVideoDialogProps) 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Upload Video</DialogTitle>
+          <DialogDescription>
+            Upload a video to share with your followers. Maximum file size is 100MB.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">

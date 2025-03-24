@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { ProfileHeader } from "@/components/profile-header"
 import { UploadVideoDialog } from "@/components/upload-video-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,6 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function ProfilePage() {
   const { profile, loading, error, refreshProfile, withdrawTokens } = useProfile()
   const [activeTab, setActiveTab] = useState("videos")
+
+  const refreshFeed = useCallback(async () => {
+    await refreshProfile()
+  }, [refreshProfile])
 
   if (loading) {
     return (
@@ -69,7 +73,10 @@ export default function ProfilePage() {
               <TabsTrigger value="saved">Saved</TabsTrigger>
             </TabsList>
           </Tabs>
-          <UploadVideoDialog onUploadComplete={refreshProfile} />
+          <UploadVideoDialog 
+            onUploadComplete={refreshProfile} 
+            onFeedRefresh={refreshFeed}
+          />
         </div>
 
         <TabsContent value="videos">

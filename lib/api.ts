@@ -22,10 +22,14 @@ export async function apiRequest<T = any>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const token = localStorage.getItem("auth_token")
-  const headers = {
-    "Content-Type": "application/json",
+  const headers: HeadersInit = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
+    ...(options.headers as HeadersInit),
+  }
+
+  // Only set Content-Type if it's not FormData
+  if (!(options.body instanceof FormData)) {
+    Object.assign(headers, { "Content-Type": "application/json" })
   }
 
   try {
