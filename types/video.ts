@@ -1,15 +1,21 @@
 export interface Video {
   id: string
+  title: string
+  description: string
+  url: string
   videoUrl: string
   thumbnailUrl: string
+  userId: string
   username: string
-  userAvatar: string
-  description: string
+  userAvatar: string | undefined
   likes: number
+  views: number
+  duration: number
+  tags: string[]
   comments: number
   shares: number
-  tags: string[]
-  duration: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface VideoFeed {

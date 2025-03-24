@@ -14,9 +14,11 @@ import { MissionsPanel } from "@/components/missions-panel"
 import { LeaderboardPanel } from "@/components/leaderboard-panel"
 import { AchievementsPanel } from "@/components/achievements-panel"
 import { DailyBonusButton } from "@/components/daily-bonus-button"
+import { UploadVideoDialog } from "@/components/upload-video-dialog"
 import { fetchVideos } from "@/lib/video-service"
 import { updateMissionProgress, updateAchievementProgress } from "@/lib/mission-service"
 import { mockLogin, isAuthenticated } from "@/lib/auth-service"
+import { useProfile } from "@/hooks/use-profile"
 import type { Video } from "@/types/video"
 
 export default function HomePage() {
@@ -30,6 +32,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement | null>(null)
+  const { profile, refreshProfile, withdrawTokens } = useProfile()
 
   // Handle authentication
   useEffect(() => {
@@ -287,67 +290,77 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="profile">
-            <ProfileHeader username="YourUsername" tokenBalance={tokens.toFixed(2)} followers={120} following={85} />
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Seus Vídeos</h3>
-                <Button size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
-                </Button>
-              </div>
+            {profile ? (
+              <>
+                <ProfileHeader 
+                  profile={profile} 
+                  onWithdrawTokens={withdrawTokens}
+                />
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Your Videos</h3>
+                    <UploadVideoDialog onUploadComplete={refreshProfile} />
+                  </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 3, 4, 5, 6].map((item) => (
-                  <div key={item} className="aspect-square bg-muted rounded-md overflow-hidden relative">
-                    <img
-                      src={`/placeholder.svg?height=120&width=120&text=${item}`}
-                      alt={`Video ${item}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-1 right-1 bg-background/80 rounded-full p-1 text-xs">
-                      0:
-                      {Math.floor(Math.random() * 59)
-                        .toString()
-                        .padStart(2, "0")}
+                  <div className="grid grid-cols-3 gap-2">
+                    {profile.videos?.map((video) => (
+                      <div key={video.id} className="aspect-square bg-muted rounded-md overflow-hidden relative">
+                        <video
+                          src={video.url}
+                          className="w-full h-full object-cover"
+                          controls
+                        />
+                        <div className="absolute bottom-1 right-1 bg-background/80 rounded-full p-1 text-xs">
+                          {Math.floor(video.duration / 60)}:
+                          {Math.floor(video.duration % 60)
+                            .toString()
+                            .padStart(2, "0")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 space-y-6">
+                    <AchievementsPanel onClaimReward={handleMissionReward} />
+
+                    <div className="mt-6">
+                      <h3 className="text-lg font-medium mb-4">Token History</h3>
+                      <Card className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Rewards from watching videos</span>
+                            <span className="text-sm font-medium">+{(tokens * 0.7).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Engagement bonus</span>
+                            <span className="text-sm font-medium">+{(tokens * 0.1).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Completed missions</span>
+                            <span className="text-sm font-medium">+{(tokens * 0.15).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Daily bonus</span>
+                            <span className="text-sm font-medium">+{(tokens * 0.05).toFixed(2)}</span>
+                          </div>
+                          <div className="h-px bg-border my-2"></div>
+                          <div className="flex justify-between items-center font-medium">
+                            <span>Total</span>
+                            <span>{tokens.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </Card>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-6 space-y-6">
-                <AchievementsPanel onClaimReward={handleMissionReward} />
-
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium mb-4">Histórico de Tokens</h3>
-                  <Card className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Recompensas por assistir vídeos</span>
-                        <span className="text-sm font-medium">+{(tokens * 0.7).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Bônus de engajamento</span>
-                        <span className="text-sm font-medium">+{(tokens * 0.1).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Missões completadas</span>
-                        <span className="text-sm font-medium">+{(tokens * 0.15).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Bônus diário</span>
-                        <span className="text-sm font-medium">+{(tokens * 0.05).toFixed(2)}</span>
-                      </div>
-                      <div className="h-px bg-border my-2"></div>
-                      <div className="flex justify-between items-center font-medium">
-                        <span>Total</span>
-                        <span>{tokens.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="p-4">
+                <div className="bg-muted p-4 rounded-lg">
+                  <p>Profile not found</p>
                 </div>
               </div>
-            </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>

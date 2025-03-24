@@ -1,9 +1,9 @@
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api`;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
 
-export interface ApiResponse<T> {
-  status: 'success' | 'error';
-  data?: T;
-  error?: string;
+interface ApiResponse<T = any> {
+  status: "success" | "error"
+  data?: T
+  error?: string
 }
 
 export async function getAuthToken(): Promise<string | null> {
@@ -17,90 +17,86 @@ export async function getAuthToken(): Promise<string | null> {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function apiRequest<T>(
+export async function apiRequest<T = any>(
   endpoint: string,
-  options: RequestInit = {},
-  retries = 3
+  options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  try {
-    const token = await getAuthToken();
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
+  const token = localStorage.getItem("auth_token")
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  }
 
+  try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
-    });
+    })
 
-    // Handle rate limiting
     if (response.status === 429) {
-      if (retries > 0) {
-        // Wait for 1 second before retrying
-        await delay(1000);
-        return apiRequest(endpoint, options, retries - 1);
-      }
-      throw new Error('Rate limit exceeded. Please try again later.');
+      // Rate limit hit, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      return apiRequest(endpoint, options)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error || 'API request failed');
+      throw new Error(data.error || "API request failed")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error('API request error:', error);
+    console.error("API request error:", error)
     return {
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    };
+      status: "error",
+      error: error instanceof Error ? error.message : "API request failed",
+    }
   }
 }
 
 export async function uploadFile(
-  endpoint: string,
   file: File,
-  additionalData: Record<string, string> = {}
-): Promise<ApiResponse<any>> {
+  endpoint: string,
+  additionalData: Record<string, any> = {}
+): Promise<ApiResponse> {
+  const token = localStorage.getItem("auth_token")
+  const formData = new FormData()
+  formData.append("video", file)
+
+  // Append additional data
+  Object.entries(additionalData).forEach(([key, value]) => {
+    formData.append(key, value)
+  })
+
   try {
-    const token = await getAuthToken();
-    const formData = new FormData();
-    formData.append('video', file);
-
-    // Add additional data to the form
-    Object.entries(additionalData).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
-
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
-    });
+    })
 
-    // Handle rate limiting
     if (response.status === 429) {
-      throw new Error('Rate limit exceeded. Please try again later.');
+      // Rate limit hit, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      return uploadFile(file, endpoint, additionalData)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error || 'Upload failed');
+      throw new Error(data.error || "File upload failed")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error("File upload error:", error)
     return {
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    };
+      status: "error",
+      error: error instanceof Error ? error.message : "File upload failed",
+    }
   }
 } 

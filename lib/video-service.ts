@@ -2,7 +2,6 @@ import type { Video, VideoFeed } from "@/types/video"
 import { apiRequest, uploadFile } from "./api"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
-const MINIO_BASE_URL = process.env.NEXT_PUBLIC_MINIO_URL || 'http://localhost:9000'
 
 interface BackendVideo {
   id: string
@@ -26,16 +25,22 @@ function transformBackendVideo(video: BackendVideo): Video {
 
   return {
     id: video.id,
+    title: video.description.split('\n')[0], // Use first line of description as title
+    description: video.description,
+    url: videoUrl,
     videoUrl,
     thumbnailUrl,
+    userId: video.userId,
     username: video.user.username,
-    userAvatar: video.user.avatar || '/placeholder.svg',
-    description: video.description,
-    likes: 0, // These will be implemented later
+    userAvatar: video.user.avatar || undefined,
+    likes: 0,
+    views: 0,
     comments: 0,
     shares: 0,
-    tags: [], // Tags will be implemented later
+    tags: [],
     duration: video.duration,
+    createdAt: video.createdAt,
+    updatedAt: video.createdAt // Use createdAt as updatedAt since it's not provided
   }
 }
 
@@ -43,70 +48,98 @@ function transformBackendVideo(video: BackendVideo): Video {
 const sampleVideos: Video[] = [
   {
     id: "video-1",
-    videoUrl:
-      "https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4",
-    thumbnailUrl:
-      "https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4",
+    title: "Christmas Tree Decorating",
+    description: "Getting ready for the holidays! #christmas #family #decorations",
+    url: "https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4",
+    thumbnailUrl: "https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4",
+    userId: "user-1",
     username: "holiday_vibes",
     userAvatar: "/placeholder.svg?height=40&width=40&text=HV",
-    description: "Getting ready for the holidays! #christmas #family #decorations",
     likes: 1245,
+    views: 5000,
     comments: 43,
     shares: 12,
     tags: ["christmas", "family", "decorations"],
     duration: 15,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: "video-2",
+    title: "Dancing Under Lights",
+    description: "Friday night vibes 🕺 #dance #music #weekend",
+    url: "https://assets.mixkit.co/videos/preview/mixkit-man-dancing-under-changing-lights-32809-large.mp4",
     videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-dancing-under-changing-lights-32809-large.mp4",
     thumbnailUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-dancing-under-changing-lights-32809-large.mp4",
+    userId: "user-2",
     username: "dance_master",
     userAvatar: "/placeholder.svg?height=40&width=40&text=DM",
-    description: "Friday night vibes 🕺 #dance #music #weekend",
     likes: 2341,
+    views: 8000,
     comments: 121,
     shares: 45,
     tags: ["dance", "music", "weekend"],
     duration: 12,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: "video-3",
+    title: "Spring Flowers",
+    description: "Spring is finally here! 🌼 #nature #spring #flowers",
+    url: "https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4",
     videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4",
     thumbnailUrl: "https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4",
+    userId: "user-3",
     username: "nature_lover",
     userAvatar: "/placeholder.svg?height=40&width=40&text=NL",
-    description: "Spring is finally here! 🌼 #nature #spring #flowers",
     likes: 876,
+    views: 3000,
     comments: 32,
     shares: 5,
     tags: ["nature", "spring", "flowers"],
     duration: 8,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: "video-4",
+    title: "Ocean Waves",
+    description: "The calming sound of waves 🌊 #ocean #waves #relax",
+    url: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
     videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
     thumbnailUrl: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
+    userId: "user-4",
     username: "ocean_explorer",
     userAvatar: "/placeholder.svg?height=40&width=40&text=OE",
-    description: "The calming sound of waves 🌊 #ocean #waves #relax",
     likes: 1543,
+    views: 6000,
     comments: 76,
     shares: 23,
     tags: ["ocean", "waves", "relax"],
     duration: 10,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: "video-5",
+    title: "Forest Run",
+    description: "Morning run in the forest 🏃‍♀️ #fitness #running #nature",
+    url: "https://assets.mixkit.co/videos/preview/mixkit-woman-running-through-forest-32807-large.mp4",
     videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-running-through-forest-32807-large.mp4",
     thumbnailUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-running-through-forest-32807-large.mp4",
+    userId: "user-5",
     username: "fitness_guru",
     userAvatar: "/placeholder.svg?height=40&width=40&text=FG",
-    description: "Morning run in the forest 🏃‍♀️ #fitness #running #nature",
     likes: 932,
+    views: 4000,
     comments: 45,
     shares: 12,
     tags: ["fitness", "running", "nature"],
     duration: 14,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
 ]
 
@@ -159,10 +192,18 @@ export async function uploadVideo(
   title: string,
   description: string
 ): Promise<{ videoId: string }> {
-  const response = await uploadFile('/content/upload', file, {
-    title,
-    description,
-  });
+  if (!(file instanceof File)) {
+    throw new Error('Invalid file type. Expected a File object.');
+  }
+
+  const response = await uploadFile(
+    file,
+    '/content/upload',
+    {
+      title,
+      description,
+    }
+  );
 
   if (response.status === 'error') {
     throw new Error(response.error || 'Failed to upload video');
