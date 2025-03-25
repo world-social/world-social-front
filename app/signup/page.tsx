@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { VerifyBlock } from "@/components/auth/verify-world-id";
-import { SignUpForm } from '@/components/auth/signup-form';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { VerifyBlock } from '@/components/auth/verify-world-id';
+import { SignUpForm } from '@/components/auth/signup-form';
+import { Login } from '@/components/wallet-login'; // Make sure this component exists
 
 export default function TwoStepRegistration() {
+  const [isLogged, setIsLogged] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const router = useRouter();
@@ -19,12 +20,20 @@ export default function TwoStepRegistration() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {!isVerified ? (
+      {!isLogged ? (
+        <div className="w-full max-w-md">
+          <h1 className="text-2xl font-bold mb-4 text-center">
+            Please Log In
+          </h1>
+          {/* Login component receives a callback to update isLogged state */}
+          <Login onLogged={() => setIsLogged(true)} />
+        </div>
+      ) : !isVerified ? (
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-bold mb-4 text-center">
             Step 1: Verify with World ID
           </h1>
-          {/* Pass a callback to update verification state */}
+          {/* VerifyBlock receives a callback to update isVerified */}
           <VerifyBlock onVerified={() => setIsVerified(true)} />
         </div>
       ) : (
@@ -32,7 +41,8 @@ export default function TwoStepRegistration() {
           <h1 className="text-2xl font-bold mb-4 text-center">
             Step 2: Create Your Account
           </h1>
-          <SignUpForm onRegistered={() => setIsRegistered(true)}/>
+          {/* SignUpForm receives a callback to update isRegistered */}
+          <SignUpForm onRegistered={() => setIsRegistered(true)} />
         </div>
       )}
     </div>

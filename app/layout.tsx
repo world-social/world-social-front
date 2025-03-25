@@ -4,7 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import MiniKitProvider from "../components/providers/minikit-provider"
-import { ErudaProvider } from "../components/providers/Eruda"
+import { ErudaProvider } from "../components/providers/eruda"
 
 const inter = Inter({ subsets: ["latin"] })
 
