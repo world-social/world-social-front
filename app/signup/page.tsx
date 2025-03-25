@@ -5,16 +5,18 @@ import { VerifyBlock } from "@/components/auth/verify-world-id";
 import { SignUpForm } from '@/components/auth/signup-form';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+
 export default function TwoStepRegistration() {
   const [isVerified, setIsVerified] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const router = useRouter();
-  
+
   useEffect(() => {
     if (isRegistered) {
       router.push('/home');
     }
   }, [isRegistered, router]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {!isVerified ? (
