@@ -30,40 +30,40 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true)
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined)
   const [showMissions, setShowMissions] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isAuthValidated, setAuthValidated] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement | null>(null)
   const { profile, refreshProfile, withdrawTokens } = useProfile()
   const router = useRouter()
 
   // Handle authentication
-  useEffect(() => {
-    const handleAuth = async () => {
-      if (!isAuthenticated()) {
-        try {
-          // await mockLogin()
-          // setIsLoggedIn(true)
-          router.push('/signup')
-        } catch (error) {
-          console.error('Failed to login:', error)
-        }
-      } else {
-        setIsLoggedIn(true)
-        // fetchUserProfile()
-        // .then((data) => {
-        //   setProfile(data);
-        // })
-        // .catch((err) => {
-        //   console.error('Error fetching profile:', err);
-        //   router.push('/register');
-        // })
-        // .finally(() => setLoading(false));
+  const handleAuth = async () => {
+    if (!isAuthenticated()) {
+      try {
+        // await mockLogin()
+        // setAuthValidated(true)
+        router.push('/signup')
+      } catch (error) {
+        console.error('Failed to login:', error)
       }
+    } else {
+      setAuthValidated(true)
+      // fetchUserProfile()
+      // .then((data) => {
+      //   setProfile(data);
+      // })
+      // .catch((err) => {
+      //   console.error('Error fetching profile:', err);
+      //   router.push('/register');
+      // })
+      // .finally(() => setLoading(false));
     }
+  }
 
+  useEffect(() => {
     handleAuth()
   }, [router])
-
+  
   // Function to add tokens based on watch time
   const addTokensForWatchTime = useCallback(async (seconds: number) => {
     // 0.1 tokens per 3 seconds of watch time
@@ -90,7 +90,7 @@ export default function HomePage() {
   // Initial load of videos
   useEffect(() => {
     const loadInitialVideos = async () => {
-      if (!isLoggedIn) return
+      if (!isAuthValidated) return
       
       setLoading(true)
       try {
@@ -106,11 +106,11 @@ export default function HomePage() {
     }
 
     loadInitialVideos()
-  }, [isLoggedIn])
+  }, [isAuthValidated])
 
   // Load more videos when user scrolls to the bottom
   const loadMoreVideos = useCallback(async () => {
-    if (loading || !hasMore || !isLoggedIn) return
+    if (loading || !hasMore || !isAuthValidated) return
 
     setLoading(true)
 
@@ -124,14 +124,14 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, nextCursor, isLoggedIn])
+  }, [loading, hasMore, nextCursor, isAuthValidated])
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
-        if (entry.isIntersecting && !loading && hasMore && isLoggedIn) {
+        if (entry.isIntersecting && !loading && hasMore && isAuthValidated) {
           loadMoreVideos()
         }
       },
@@ -147,7 +147,7 @@ export default function HomePage() {
         observerRef.current.disconnect()
       }
     }
-  }, [loadMoreVideos, loading, hasMore, isLoggedIn])
+  }, [loadMoreVideos, loading, hasMore, isAuthValidated])
 
   const refreshFeed = useCallback(async () => {
     setNextCursor(undefined)
@@ -156,7 +156,7 @@ export default function HomePage() {
     await loadMoreVideos()
   }, [loadMoreVideos])
 
-  if (!isLoggedIn) {
+  if (!isAuthValidated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
