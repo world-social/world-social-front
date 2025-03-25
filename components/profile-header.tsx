@@ -70,9 +70,9 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
 
   const handleWithdraw = async () => {
     try {
-      const amount = parseInt(withdrawAmount)
-      if (isNaN(amount) || amount <= 0) {
-        throw new Error("Please enter a valid amount")
+      const amount = parseFloat(withdrawAmount)
+      if (isNaN(amount) || amount <= 0 || amount > (profile.tokenBalance || 0)) {
+        throw new Error("Please enter a valid amount within the available balance")
       }
       await onWithdrawTokens(amount)
       setIsWithdrawing(false)
@@ -109,7 +109,15 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
 
       <div className="flex flex-col items-center md:items-end gap-2">
         <div className="text-center">
-          <div className="text-2xl font-bold">{profile.tokenBalance}</div>
+          <div className="text-2xl font-bold">
+            {typeof profile.tokenBalance === 'number' 
+              ? profile.tokenBalance.toLocaleString(undefined, { 
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2 
+                })
+              : '0'
+            }
+          </div>
           <div className="text-sm text-muted-foreground">Tokens</div>
         </div>
         
@@ -120,7 +128,9 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
           {profile.isInfluencer && (
             <Dialog open={isWithdrawing} onOpenChange={setIsWithdrawing}>
               <DialogTrigger asChild>
-                <Button>Withdraw Tokens</Button>
+                <Button disabled={!profile.tokenBalance || profile.tokenBalance <= 0}>
+                  Withdraw Tokens
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -128,16 +138,30 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="amount">Amount</Label>
+                    <Label htmlFor="amount">Amount (Available: {profile.tokenBalance?.toLocaleString()})</Label>
                     <Input
                       id="amount"
                       type="number"
                       value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue) && numValue >= 0 && numValue <= (profile.tokenBalance || 0)) {
+                          setWithdrawAmount(value);
+                        }
+                      }}
+                      min={0}
+                      max={profile.tokenBalance}
+                      step={0.01}
                       placeholder="Enter amount to withdraw"
                     />
                   </div>
-                  <Button onClick={handleWithdraw}>Withdraw</Button>
+                  <Button 
+                    onClick={handleWithdraw}
+                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (profile.tokenBalance || 0)}
+                  >
+                    Withdraw
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

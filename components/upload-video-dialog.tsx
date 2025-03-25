@@ -21,6 +21,7 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [uploading, setUploading] = useState(false)
+  const [duration, setDuration] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +45,19 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
     // Create a preview URL
     const objectUrl = URL.createObjectURL(selectedFile)
     setPreview(objectUrl)
+
+    // Get video duration
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src)
+      setDuration(video.duration)
+      
+      if (video.duration > 30) {
+        toast.info("Only the first 30 seconds of the video will be uploaded")
+      }
+    }
+    video.src = objectUrl
 
     // Clean up the preview URL when component unmounts
     return () => URL.revokeObjectURL(objectUrl)
@@ -69,6 +83,7 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
       setPreview(null)
       setTitle("")
       setDescription("")
+      setDuration(null)
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -107,7 +122,7 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
         <DialogHeader>
           <DialogTitle>Upload Video</DialogTitle>
           <DialogDescription>
-            Upload a video to share with your followers. Maximum file size is 100MB.
+            Upload a video to share with your followers. Videos longer than 30 seconds will be trimmed.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -129,6 +144,11 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
                 controls
                 style={{ maxHeight: "200px" }}
               />
+            )}
+            {duration && duration > 30 && (
+              <p className="text-sm text-yellow-600">
+                Note: Only the first 30 seconds of this video will be uploaded
+              </p>
             )}
           </div>
           <div className="grid gap-2">

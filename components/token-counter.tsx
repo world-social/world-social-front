@@ -3,47 +3,55 @@
 import { useState, useEffect } from "react"
 import { Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useProfile } from "@/hooks/use-profile"
 
 interface TokenCounterProps {
-  value: number
+  value?: number
 }
 
-export function TokenCounter({ value }: TokenCounterProps) {
+export function TokenCounter({ value: propValue }: TokenCounterProps) {
+  const { profile } = useProfile()
   const [isAnimating, setIsAnimating] = useState(false)
-  const [prevValue, setPrevValue] = useState(value)
-  const [displayValue, setDisplayValue] = useState(value)
+  const [prevValue, setPrevValue] = useState(0)
+  const [displayValue, setDisplayValue] = useState(0)
+
+  // Use profile's token balance if no value is provided
+  const value = propValue ?? profile?.tokenBalance ?? 0
 
   useEffect(() => {
-    if (value > prevValue) {
-      setIsAnimating(true)
+    // Update the display value when profile changes
+    if (profile?.tokenBalance !== undefined) {
+      if (profile.tokenBalance > prevValue) {
+        setIsAnimating(true)
 
-      // Animate the counter increasing
-      const diff = value - prevValue
-      const steps = 10
-      const increment = diff / steps
-      let current = prevValue
-      let step = 0
+        // Animate the counter increasing
+        const diff = profile.tokenBalance - prevValue
+        const steps = 10
+        const increment = diff / steps
+        let current = prevValue
+        let step = 0
 
-      const interval = setInterval(() => {
-        step++
-        current += increment
-        setDisplayValue(current)
+        const interval = setInterval(() => {
+          step++
+          current += increment
+          setDisplayValue(current)
 
-        if (step >= steps) {
-          clearInterval(interval)
-          setDisplayValue(value)
-          setTimeout(() => {
-            setIsAnimating(false)
-          }, 300)
-        }
-      }, 50)
+          if (step >= steps) {
+            clearInterval(interval)
+            setDisplayValue(profile.tokenBalance)
+            setTimeout(() => {
+              setIsAnimating(false)
+            }, 300)
+          }
+        }, 50)
 
-      return () => clearInterval(interval)
+        return () => clearInterval(interval)
+      }
+
+      setPrevValue(profile.tokenBalance)
+      setDisplayValue(profile.tokenBalance)
     }
-
-    setPrevValue(value)
-    setDisplayValue(value)
-  }, [value, prevValue])
+  }, [profile?.tokenBalance, prevValue])
 
   return (
     <div className="flex items-center bg-primary/10 rounded-full px-3 py-1">

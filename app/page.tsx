@@ -22,7 +22,6 @@ import { useProfile } from "@/hooks/use-profile"
 import type { Video } from "@/types/video"
 
 export default function HomePage() {
-  const [tokens, setTokens] = useState(0)
   const [activeTab, setActiveTab] = useState("feed")
   const [videos, setVideos] = useState<Video[]>([])
   const [loading, setLoading] = useState(false)
@@ -54,26 +53,30 @@ export default function HomePage() {
 
   // Function to add tokens based on watch time
   const addTokensForWatchTime = useCallback(async (seconds: number) => {
-    // 0.1 tokens per 3 seconds of watch time
-    const tokensToAdd = (seconds / 3) * 0.1
-    setTokens((prev) => prev + tokensToAdd)
-
-    // Update mission progress for watching videos
     try {
+      // Update mission progress for watching videos
       await updateMissionProgress("mission-1", 0.1) // Increment watch progress
       await updateAchievementProgress("achievement-1", 0.1) // Increment achievement progress
       await updateAchievementProgress("achievement-2", 0.1) // Increment achievement progress
+      
+      // Refresh profile to get updated token balance
+      await refreshProfile()
     } catch (error) {
       console.error("Error updating mission progress:", error)
     }
-  }, [])
+  }, [refreshProfile])
 
   // Function to handle mission rewards
-  const handleMissionReward = useCallback((reward: number) => {
-    setTokens((prev) => prev + reward)
-    // Update achievement for collecting tokens
-    updateAchievementProgress("achievement-4", reward)
-  }, [])
+  const handleMissionReward = useCallback(async (reward: number) => {
+    try {
+      // Update achievement for collecting tokens
+      await updateAchievementProgress("achievement-4", reward)
+      // Refresh profile to get updated token balance
+      await refreshProfile()
+    } catch (error) {
+      console.error("Error handling mission reward:", error)
+    }
+  }, [refreshProfile])
 
   // Initial load of videos
   useEffect(() => {
@@ -173,7 +176,7 @@ export default function HomePage() {
                 3
               </span>
             </Button>
-            <TokenCounter value={tokens} />
+            <TokenCounter />
             <Avatar>
               <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
               <AvatarFallback>U</AvatarFallback>
@@ -185,7 +188,7 @@ export default function HomePage() {
       {/* Missions Panel (Slide Down) */}
       {showMissions && (
         <div className="p-4 border-b mt-[65px]">
-          <MissionsPanel onClaimReward={handleMissionReward} />
+          <MissionsPanel />
         </div>
       )}
 
@@ -201,6 +204,12 @@ export default function HomePage() {
 
           <TabsContent value="feed" className="h-[calc(100vh-8rem)]">
             <div className="px-4">
+              <div className="flex justify-end mb-4">
+                <UploadVideoDialog 
+                  onUploadComplete={refreshProfile} 
+                  onFeedRefresh={refreshFeed}
+                />
+              </div>
               {videos.length === 0 && !loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <p className="text-muted-foreground mb-4">No videos found</p>
@@ -331,7 +340,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="mt-6 space-y-6">
-                    <AchievementsPanel onClaimReward={handleMissionReward} />
+                    <AchievementsPanel />
 
                     <div className="mt-6">
                       <h3 className="text-lg font-medium mb-4">Token History</h3>
@@ -339,24 +348,24 @@ export default function HomePage() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Rewards from watching videos</span>
-                            <span className="text-sm font-medium">+{(tokens * 0.7).toFixed(2)}</span>
+                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.7).toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Engagement bonus</span>
-                            <span className="text-sm font-medium">+{(tokens * 0.1).toFixed(2)}</span>
+                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.1).toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Completed missions</span>
-                            <span className="text-sm font-medium">+{(tokens * 0.15).toFixed(2)}</span>
+                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.15).toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Daily bonus</span>
-                            <span className="text-sm font-medium">+{(tokens * 0.05).toFixed(2)}</span>
+                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.05).toFixed(2)}</span>
                           </div>
                           <div className="h-px bg-border my-2"></div>
                           <div className="flex justify-between items-center font-medium">
                             <span>Total</span>
-                            <span>{tokens.toFixed(2)}</span>
+                            <span>{(profile?.tokenBalance ?? 0).toFixed(2)}</span>
                           </div>
                         </div>
                       </Card>
@@ -376,7 +385,9 @@ export default function HomePage() {
       </main>
 
       {/* Daily Bonus Button */}
-      <DailyBonusButton onCollect={(amount) => setTokens(prev => prev + amount)} />
+      <DailyBonusButton onCollect={async (amount) => {
+        await refreshProfile()
+      }} />
     </div>
   )
 }

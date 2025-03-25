@@ -17,17 +17,22 @@ interface DailyBonusButtonProps {
 
 export function DailyBonusButton({ onCollect }: DailyBonusButtonProps) {
   const [hasCollected, setHasCollected] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Check if user has already collected today's bonus
     const checkDailyBonus = async () => {
       try {
         const response = await apiRequest<DailyBonusStatus>('/tokens/daily-bonus/status')
-        if (response.status === 'success' && response.data?.hasCollected) {
-          setHasCollected(true)
+        if (response.status === 'success') {
+          setHasCollected(response.data?.hasCollected || false)
         }
       } catch (error) {
         console.error('Error checking daily bonus status:', error)
+        // If we get an error checking the status, we'll show the button
+        setHasCollected(false)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -46,9 +51,17 @@ export function DailyBonusButton({ onCollect }: DailyBonusButtonProps) {
       }
     } catch (error) {
       console.error('Error collecting daily bonus:', error)
+      // If we get an error about already collecting, we'll hide the button
+      if (error instanceof Error && error.message.includes("Already collected")) {
+        setHasCollected(true)
+      }
     }
   }
 
+  // Don't show anything while loading
+  if (isLoading) return null
+  
+  // Don't show the button if already collected
   if (hasCollected) return null
 
   return (
