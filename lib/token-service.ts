@@ -86,7 +86,7 @@ export async function rewardWatchTime(videoId: string, seconds: number): Promise
     console.log('Full response:', JSON.stringify(response, null, 2));
     console.log(`Watch time reward calculation:`, {
       seconds,
-      expectedReward: (seconds / 3) * 0.1,
+      expectedReward: (seconds / 5) * 0.1,
       actualReward: reward,
       responseData: response.data
     });

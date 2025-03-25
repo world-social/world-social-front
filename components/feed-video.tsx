@@ -229,7 +229,7 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
 
           <div className="absolute bottom-4 right-4 bg-background/80 rounded-full px-3 py-1.5 text-xs flex items-center">
             <Coins className="h-3 w-3 mr-1" />
-            <span>+0.1 per 3s watched</span>
+            <span>+0.1 per 5s watched</span>
           </div>
         </div>
       </CardContent>
