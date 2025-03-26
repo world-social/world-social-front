@@ -21,11 +21,13 @@ export function TokenCounter({ value: propValue }: TokenCounterProps) {
   useEffect(() => {
     // Update the display value when profile changes
     if (profile?.tokenBalance !== undefined) {
-      if (profile.tokenBalance > prevValue) {
+      const newValue = profile.tokenBalance
+      
+      if (newValue > prevValue) {
         setIsAnimating(true)
-
+        
         // Animate the counter increasing
-        const diff = profile.tokenBalance - prevValue
+        const diff = newValue - prevValue
         const steps = 10
         const increment = diff / steps
         let current = prevValue
@@ -38,7 +40,7 @@ export function TokenCounter({ value: propValue }: TokenCounterProps) {
 
           if (step >= steps) {
             clearInterval(interval)
-            setDisplayValue(profile.tokenBalance)
+            setDisplayValue(newValue)
             setTimeout(() => {
               setIsAnimating(false)
             }, 300)
@@ -48,8 +50,8 @@ export function TokenCounter({ value: propValue }: TokenCounterProps) {
         return () => clearInterval(interval)
       }
 
-      setPrevValue(profile.tokenBalance)
-      setDisplayValue(profile.tokenBalance)
+      setPrevValue(newValue)
+      setDisplayValue(newValue)
     }
   }, [profile?.tokenBalance, prevValue])
 

@@ -62,35 +62,30 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
     }
   }, [isLoaded]) // Remove index dependency since we want all videos to autoplay
 
-  // Track actual watch time when video is playing and visible
+  // Track watch time and reward tokens
   useEffect(() => {
-    let watchTimer: NodeJS.Timeout
+    let timer: NodeJS.Timeout;
+    let lastRewardTime = Date.now();
 
     if (isPlaying && isVisible && isLoaded) {
-      watchTimer = setInterval(() => {
-        setWatchTime((prev) => {
-          const newTime = prev + 1
-
-          // Reward tokens every 5 seconds of watch time
-          const shouldReward = newTime >= 5 && newTime % 5 === 0
-          if (shouldReward) {
-            // Call the token service to reward watch time
-            rewardWatchTime(video.id, newTime).then((reward) => {
-              if (reward > 0) {
-                onWatchTime(reward)
-              }
-            }).catch(console.error)
-          }
-
-          return newTime
-        })
-      }, 1000)
+      timer = setInterval(async () => {
+        const currentTime = Date.now();
+        const elapsedSeconds = (currentTime - lastRewardTime) / 1000;
+        
+        if (elapsedSeconds >= 5) {
+          const reward = await rewardWatchTime(video.id, elapsedSeconds);
+          onWatchTime(reward);
+          lastRewardTime = currentTime;
+        }
+      }, 1000);
     }
 
     return () => {
-      if (watchTimer) clearInterval(watchTimer)
-    }
-  }, [isPlaying, isVisible, isLoaded, onWatchTime, video.id])
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [isPlaying, isVisible, isLoaded, onWatchTime, video.id]);
 
   // Handle video events
   useEffect(() => {
@@ -176,6 +171,11 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
       }
     }
   }
+
+  const handlePlay = async () => {
+    setIsPlaying(true);
+    // Remove the duplicate onWatchTime call from here
+  };
 
   return (
     <Card className="overflow-hidden mb-4" ref={containerRef}>

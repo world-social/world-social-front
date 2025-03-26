@@ -65,10 +65,15 @@ interface EngagementResponse {
 
 export async function rewardWatchTime(videoId: string, seconds: number): Promise<number> {
   try {
+    // Calculate reward: 0.1 tokens per 5 seconds watched
+    // Round to 2 decimal places to avoid floating-point precision issues
+    const reward = Math.round((seconds / 5) * 0.1 * 100) / 100;
+
     const response = await apiRequest<ApiResponse<WatchTimeResponse>>(`/content/${videoId}/watch-time`, {
       method: 'POST',
       body: JSON.stringify({ 
         seconds,
+        reward,
         timestamp: Date.now() 
       }),
     });
@@ -79,24 +84,24 @@ export async function rewardWatchTime(videoId: string, seconds: number): Promise
       throw new Error('Failed to reward watch time');
     }
 
-    // Access reward from the nested data structure
-    const reward = (response as any).data?.reward ?? 0;
+    // Access reward from the nested data structure and round to 2 decimal places
+    const actualReward = Math.round(((response as any).data?.reward ?? 0) * 100) / 100;
     
     // Log the reward calculation and full response for debugging
     console.log('Full response:', JSON.stringify(response, null, 2));
     console.log(`Watch time reward calculation:`, {
       seconds,
-      expectedReward: (seconds / 5) * 0.1,
-      actualReward: reward,
+      expectedReward: reward,
+      actualReward,
       responseData: response.data
     });
     
     // Invalidate token balance cache after receiving reward
-    if (reward > 0) {
+    if (actualReward > 0) {
       await apiRequest('/gamification/stats', { method: 'GET', cache: 'no-store' });
     }
     
-    return reward;
+    return actualReward;
   } catch (error) {
     console.error('Error rewarding watch time:', error);
     return 0;

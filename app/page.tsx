@@ -54,17 +54,26 @@ export default function HomePage() {
   // Function to add tokens based on watch time
   const addTokensForWatchTime = useCallback(async (seconds: number) => {
     try {
+      // Get the current token balance before updating
+      const currentBalance = profile?.tokenBalance || 0
+      
+      // Calculate reward: 0.1 tokens per 5 seconds watched
+      const reward = (seconds / 5) * 0.1
+      
       // Update mission progress for watching videos
-      await updateMissionProgress("mission-1", 0.1) // Increment watch progress
-      await updateAchievementProgress("achievement-1", 0.1) // Increment achievement progress
-      await updateAchievementProgress("achievement-2", 0.1) // Increment achievement progress
+      await updateMissionProgress("mission-1", reward) // Increment watch progress
+      await updateAchievementProgress("achievement-1", reward) // Increment achievement progress
+      await updateAchievementProgress("achievement-2", reward) // Increment achievement progress
       
       // Refresh profile to get updated token balance
       await refreshProfile()
+      
+      // The TokenCounter component will automatically handle the animation
+      // based on the token balance change from the profile update
     } catch (error) {
       console.error("Error updating mission progress:", error)
     }
-  }, [refreshProfile])
+  }, [refreshProfile, profile?.tokenBalance])
 
   // Function to handle mission rewards
   const handleMissionReward = useCallback(async (reward: number) => {

@@ -55,7 +55,10 @@ export function useProfile(): UseProfileReturn {
       const response = await apiRequest<Profile>('/auth/profile')
       
       if (response.status === 'success' && response.data) {
-        setProfile(response.data)
+        // Only update if the token balance has changed
+        if (!profile || profile.tokenBalance !== response.data.tokenBalance) {
+          setProfile(response.data)
+        }
       } else {
         if (response.error === 'User not found' || response.error === 'Access token required') {
           router.push('/signup')
