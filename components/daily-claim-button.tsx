@@ -56,7 +56,7 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
   // Check claim status
   const checkClaimStatus = async () => {
     try {
-      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily-bonus/status')
+      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily-claim/status')
       
       if (response.status === 'error') {
         throw new Error(response.error || 'Failed to check claim status')
@@ -119,7 +119,7 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
 
     setLoading(true)
     try {
-      const response = await apiRequest<ApiResponse<ClaimResponse>>('/tokens/daily-bonus', {
+      const response = await apiRequest<ApiResponse<ClaimResponse>>('/tokens/daily-claim', {
         method: 'POST'
       })
 

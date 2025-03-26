@@ -13,7 +13,7 @@ import { ProfileHeader } from "@/components/profile-header"
 import { MissionsPanel } from "@/components/missions-panel"
 import { LeaderboardPanel } from "@/components/leaderboard-panel"
 import { AchievementsPanel } from "@/components/achievements-panel"
-import { DailyBonusButton } from "@/components/daily-bonus-button"
+import { ClaimButton } from "@/components/daily-bonus-button"
 import { UploadVideoDialog } from "@/components/upload-video-dialog"
 import { fetchVideos } from "@/lib/video-service"
 import { updateMissionProgress, updateAchievementProgress } from "@/lib/mission-service"
@@ -167,7 +167,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between h-12 px-4">
           <h1 className="text-xl font-bold">WorldSocial</h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setShowMissions(!showMissions)} className="relative">
@@ -187,207 +187,190 @@ export default function HomePage() {
 
       {/* Missions Panel (Slide Down) */}
       {showMissions && (
-        <div className="p-4 border-b mt-[65px]">
+        <div className="p-4 border-b mt-[88px]">
           <MissionsPanel />
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 pt-[65px]">
+      {/* Main Content - Adjusted top padding to account for fixed header */}
+      <main className="flex-1 pt-[88px]">
         <Tabs defaultValue="feed" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 sticky top-[65px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <TabsList className="w-full grid grid-cols-4 h-10 fixed top-[48px] left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <TabsTrigger value="feed">Feed</TabsTrigger>
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="ranking">Ranking</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="feed" className="h-[calc(100vh-8rem)]">
-            <div className="px-4">
-              <div className="flex justify-end mb-4">
-                <UploadVideoDialog 
-                  onUploadComplete={refreshProfile} 
-                  onFeedRefresh={refreshFeed}
-                />
-              </div>
-              {videos.length === 0 && !loading ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <p className="text-muted-foreground mb-4">No videos found</p>
-                  <Button onClick={() => loadMoreVideos()}>Refresh Feed</Button>
-                </div>
-              ) : (
-                videos.map((video, index) => (
-                  <FeedVideo key={video.id} video={video} onWatchTime={addTokensForWatchTime} index={index} />
-                ))
-              )}
+          <div className="mt-[48px]"> {/* Add padding for fixed tabs */}
+            <TabsContent value="feed" className="h-[calc(100vh-136px)]">
+              {/* Feed content */}
+              <div className="px-4">
+                {/* Rest of feed content */}
+                {videos.length === 0 && !loading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-muted-foreground mb-4">No videos found</p>
+                    <Button onClick={() => loadMoreVideos()}>Refresh Feed</Button>
+                  </div>
+                ) : (
+                  videos.map((video, index) => (
+                    <FeedVideo key={video.id} video={video} onWatchTime={addTokensForWatchTime} index={index} />
+                  ))
+                )}
 
-              {/* Loading indicator */}
-              {hasMore && (
-                <div ref={loadingRef} className="py-4 flex justify-center items-center">
-                  {loading ? (
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-3 h-3 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></div>
-                      <div
-                        className="w-3 h-3 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></div>
-                      <div
-                        className="w-3 h-3 rounded-full bg-primary animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></div>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Scroll for more videos</span>
-                  )}
-                </div>
-              )}
+                {/* Loading indicator */}
+                {hasMore && (
+                  <div ref={loadingRef} className="py-4 flex justify-center items-center">
+                    {loading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Scroll for more videos</span>
+                    )}
+                  </div>
+                )}
 
-              {/* End of content message */}
-              {!hasMore && videos.length > 0 && (
-                <div className="py-8 text-center">
-                  <p className="text-muted-foreground">You've reached the end of the feed!</p>
-                  <Button
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => {
-                      setNextCursor(undefined)
-                      setHasMore(true)
-                      setVideos([])
-                      loadMoreVideos()
-                    }}
-                  >
-                    Refresh Feed
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="discover">
-            <div className="p-4">
-              <h3 className="text-lg font-medium mb-4">Tags em Alta</h3>
-              <div className="flex flex-wrap gap-2 mb-6">
-                {["trending", "viral", "dance", "music", "nature", "fitness", "food", "travel", "gaming"].map((tag) => (
-                  <Badge key={tag} variant="secondary" className="py-1.5 px-3">
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
-
-              <h3 className="text-lg font-medium mb-4">Criadores Populares</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {["creator1", "nature_lover", "dance_master", "fitness_guru", "food_lover", "travel_bug"].map(
-                  (creator) => (
-                    <div key={creator} className="flex flex-col items-center">
-                      <Avatar className="h-16 w-16 mb-2">
-                        <AvatarImage src={`/placeholder.svg?height=64&width=64&text=${creator[0]}`} alt={creator} />
-                        <AvatarFallback>{creator[0]}</AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-medium">@{creator}</p>
-                    </div>
-                  ),
+                {/* End of content message */}
+                {!hasMore && videos.length > 0 && (
+                  <div className="py-8 text-center">
+                    <p className="text-muted-foreground">You've reached the end of the feed!</p>
+                    <Button
+                      variant="outline"
+                      className="mt-2"
+                      onClick={() => {
+                        setNextCursor(undefined)
+                        setHasMore(true)
+                        setVideos([])
+                        loadMoreVideos()
+                      }}
+                    >
+                      Refresh Feed
+                    </Button>
+                  </div>
                 )}
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="ranking">
-            <div className="p-4 space-y-6">
-              <LeaderboardPanel />
+            <TabsContent value="discover">
+              <div className="p-4">
+                <h3 className="text-lg font-medium mb-4">Tags em Alta</h3>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {["trending", "viral", "dance", "music", "nature", "fitness", "food", "travel", "gaming"].map((tag) => (
+                    <Badge key={tag} variant="secondary" className="py-1.5 px-3">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
 
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-2">Sua posição atual: 6º lugar</p>
-                <p className="text-sm">Assista mais vídeos e complete missões para subir no ranking!</p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            {profile ? (
-              <>
-                <ProfileHeader 
-                  profile={profile} 
-                  onWithdrawTokens={withdrawTokens}
-                />
-                <div className="p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium">Your Videos</h3>
-                    <UploadVideoDialog 
-                      onUploadComplete={refreshProfile} 
-                      onFeedRefresh={refreshFeed}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {profile.videos?.map((video) => (
-                      <div key={video.id} className="aspect-square bg-muted rounded-md overflow-hidden relative">
-                        <video
-                          src={video.url}
-                          className="w-full h-full object-cover"
-                          controls
-                        />
-                        <div className="absolute bottom-1 right-1 bg-background/80 rounded-full p-1 text-xs">
-                          {Math.floor(video.duration / 60)}:
-                          {Math.floor(video.duration % 60)
-                            .toString()
-                            .padStart(2, "0")}
-                        </div>
+                <h3 className="text-lg font-medium mb-4">Criadores Populares</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {["creator1", "nature_lover", "dance_master", "fitness_guru", "food_lover", "travel_bug"].map(
+                    (creator) => (
+                      <div key={creator} className="flex flex-col items-center">
+                        <Avatar className="h-16 w-16 mb-2">
+                          <AvatarImage src={`/placeholder.svg?height=64&width=64&text=${creator[0]}`} alt={creator} />
+                          <AvatarFallback>{creator[0]}</AvatarFallback>
+                        </Avatar>
+                        <p className="text-sm font-medium">@{creator}</p>
                       </div>
-                    ))}
-                  </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            </TabsContent>
 
-                  <div className="mt-6 space-y-6">
-                    <AchievementsPanel />
+            <TabsContent value="ranking">
+              <div className="p-4 space-y-6">
+                <LeaderboardPanel />
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-2">Sua posição atual: 6º lugar</p>
+                  <p className="text-sm">Assista mais vídeos e complete missões para subir no ranking!</p>
+                </div>
+              </div>
+            </TabsContent>
 
-                    <div className="mt-6">
-                      <h3 className="text-lg font-medium mb-4">Token History</h3>
-                      <Card className="p-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Rewards from watching videos</span>
-                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.7).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Engagement bonus</span>
-                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.1).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Completed missions</span>
-                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.15).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Daily bonus</span>
-                            <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.05).toFixed(2)}</span>
-                          </div>
-                          <div className="h-px bg-border my-2"></div>
-                          <div className="flex justify-between items-center font-medium">
-                            <span>Total</span>
-                            <span>{(profile?.tokenBalance ?? 0).toFixed(2)}</span>
+            <TabsContent value="profile">
+              {profile ? (
+                <>
+                  <ProfileHeader 
+                    profile={profile} 
+                    onWithdrawTokens={withdrawTokens}
+                  />
+                  <div className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium">Your Videos</h3>
+                      <UploadVideoDialog 
+                        onUploadComplete={refreshProfile} 
+                        onFeedRefresh={refreshFeed}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {profile.videos?.map((video) => (
+                        <div key={video.id} className="aspect-square bg-muted rounded-md overflow-hidden relative">
+                          <video
+                            src={video.url}
+                            className="w-full h-full object-cover"
+                            controls
+                          />
+                          <div className="absolute bottom-1 right-1 bg-background/80 rounded-full p-1 text-xs">
+                            {Math.floor(video.duration / 60)}:
+                            {Math.floor(video.duration % 60)
+                              .toString()
+                              .padStart(2, "0")}
                           </div>
                         </div>
-                      </Card>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 space-y-6">
+                      <AchievementsPanel />
+
+                      <div className="mt-6">
+                        <h3 className="text-lg font-medium mb-4">Token History</h3>
+                        <Card className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Rewards from watching videos</span>
+                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.7).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Engagement bonus</span>
+                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.1).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Completed missions</span>
+                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.15).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Daily bonus</span>
+                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.05).toFixed(2)}</span>
+                            </div>
+                            <div className="h-px bg-border my-2"></div>
+                            <div className="flex justify-between items-center font-medium">
+                              <span>Total</span>
+                              <span>{(profile?.tokenBalance ?? 0).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </Card>
+                      </div>
                     </div>
                   </div>
+                </>
+              ) : (
+                <div className="p-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p>Profile not found</p>
+                  </div>
                 </div>
-              </>
-            ) : (
-              <div className="p-4">
-                <div className="bg-muted p-4 rounded-lg">
-                  <p>Profile not found</p>
-                </div>
-              </div>
-            )}
-          </TabsContent>
+              )}
+            </TabsContent>
+          </div>
         </Tabs>
       </main>
-
-      {/* Daily Bonus Button */}
-      <DailyBonusButton onCollect={async (amount) => {
-        await refreshProfile()
-      }} />
     </div>
   )
 }

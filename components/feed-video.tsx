@@ -71,16 +71,15 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
         setWatchTime((prev) => {
           const newTime = prev + 1
 
-          // Reward tokens every 3 seconds of actual watch time
-          const shouldReward = newTime - lastRewardTime.current >= 3
+          // Reward tokens every 5 seconds of watch time
+          const shouldReward = newTime >= 5 && newTime % 5 === 0
           if (shouldReward) {
             // Call the token service to reward watch time
-            rewardWatchTime(video.id, 3).then((reward) => {
+            rewardWatchTime(video.id, newTime).then((reward) => {
               if (reward > 0) {
                 onWatchTime(reward)
               }
             }).catch(console.error)
-            lastRewardTime.current = newTime
           }
 
           return newTime
@@ -229,7 +228,7 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
 
           <div className="absolute bottom-4 right-4 bg-background/80 rounded-full px-3 py-1.5 text-xs flex items-center">
             <Coins className="h-3 w-3 mr-1" />
-            <span>+0.1 per 5s watched</span>
+            <span>+0.1 per 5s watched (max 15 videos/day)</span>
           </div>
         </div>
       </CardContent>

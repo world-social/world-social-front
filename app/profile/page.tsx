@@ -11,6 +11,10 @@ export default function ProfilePage() {
   const { profile, loading, error, refreshProfile, withdrawTokens } = useProfile()
   const [activeTab, setActiveTab] = useState("videos")
 
+  const handleTokensCollected = useCallback(async (amount: number) => {
+    await refreshProfile()
+  }, [refreshProfile])
+
   const refreshFeed = useCallback(async () => {
     await refreshProfile()
   }, [refreshProfile])
@@ -62,6 +66,7 @@ export default function ProfilePage() {
       <ProfileHeader 
         profile={profile} 
         onWithdrawTokens={withdrawTokens}
+        onTokensCollected={handleTokensCollected}
       />
       
       <div className="mt-8">

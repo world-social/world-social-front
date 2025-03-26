@@ -7,44 +7,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Profile } from "@/hooks/use-profile"
+import { DailyTokens } from "@/components/daily-bonus-countdown"
+import { Coins } from "lucide-react"
 
 interface ProfileHeaderProps {
   profile: Profile | null
   onWithdrawTokens: (amount: number) => Promise<void>
+  onTokensCollected?: (amount: number) => void
 }
 
-export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps) {
-  const [isEditing, setIsEditing] = useState(false)
+export function ProfileHeader({ profile, onWithdrawTokens, onTokensCollected }: ProfileHeaderProps) {
   const [isWithdrawing, setIsWithdrawing] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState("")
-  const [editFormData, setEditFormData] = useState({
-    username: "",
-    avatar: ""
-  })
-
-  // Initialize edit form data when profile changes
-  useEffect(() => {
-    if (profile) {
-      setEditFormData({
-        username: profile.username,
-        avatar: profile.avatar || ""
-      })
-    }
-  }, [profile])
-
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSaveChanges = async () => {
-    try {
-      // TODO: Implement save changes API call
-      setIsEditing(false)
-    } catch (error) {
-      console.error("Error saving profile changes:", error)
-    }
-  }
 
   if (!profile) {
     return (
@@ -121,10 +95,8 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
           <div className="text-sm text-muted-foreground">Tokens</div>
         </div>
         
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditing(true)}>
-            Edit Profile
-          </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <DailyTokens onClaim={onTokensCollected} />
           {profile.isInfluencer && (
             <Dialog open={isWithdrawing} onOpenChange={setIsWithdrawing}>
               <DialogTrigger asChild>
@@ -168,37 +140,6 @@ export function ProfileHeader({ profile, onWithdrawTokens }: ProfileHeaderProps)
           )}
         </div>
       </div>
-
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                value={editFormData.username}
-                onChange={handleEditChange}
-                readOnly
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="avatar">Avatar URL</Label>
-              <Input
-                id="avatar"
-                name="avatar"
-                value={editFormData.avatar}
-                onChange={handleEditChange}
-                placeholder="Enter avatar URL"
-              />
-            </div>
-            <Button onClick={handleSaveChanges}>Save Changes</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
