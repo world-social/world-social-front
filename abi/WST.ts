@@ -1,4 +1,4 @@
-export const abi = {
+export const WST = [{
 	"deploy": {
 		"VM:-": {
 			"linkReferences": {},
@@ -20880,4 +20880,4 @@ export const abi = {
 			"type": "function"
 		}
 	]
-}
+}]
