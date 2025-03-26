@@ -65,7 +65,7 @@ export function ProfileHeader({ profile, onWithdrawTokens, onTokensCollected }: 
       
       <div className="flex-1 text-center md:text-left">
         <h1 className="text-2xl font-bold">{profile.username}</h1>
-        <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
+        {/* <div className="flex items-center justify-center md:justify-start gap-4">
           <div>
             <span className="font-semibold">{profile.followers}</span>
             <span className="text-muted-foreground ml-1">Followers</span>
@@ -78,11 +78,11 @@ export function ProfileHeader({ profile, onWithdrawTokens, onTokensCollected }: 
             <span className="font-semibold">{profile.videos?.length || 0}</span>
             <span className="text-muted-foreground ml-1">Posts</span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex flex-col items-center md:items-end gap-2">
-        <div className="text-center">
+        {/* <div className="text-center">
           <div className="text-2xl font-bold">
             {typeof profile.tokenBalance === 'number' 
               ? profile.tokenBalance.toLocaleString(undefined, { 
@@ -93,52 +93,50 @@ export function ProfileHeader({ profile, onWithdrawTokens, onTokensCollected }: 
             }
           </div>
           <div className="text-sm text-muted-foreground">Tokens</div>
-        </div>
+        </div> */}
         
-        <div className="flex flex-col gap-2 w-full">
-          <DailyTokens onClaim={onTokensCollected} />
-          {profile.isInfluencer && (
-            <Dialog open={isWithdrawing} onOpenChange={setIsWithdrawing}>
-              <DialogTrigger asChild>
-                <Button disabled={!profile.tokenBalance || profile.tokenBalance <= 0}>
-                  Withdraw Tokens
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Withdraw Tokens</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="amount">Amount (Available: {profile.tokenBalance?.toLocaleString()})</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={withdrawAmount}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const numValue = parseFloat(value);
-                        if (!isNaN(numValue) && numValue >= 0 && numValue <= (profile.tokenBalance || 0)) {
-                          setWithdrawAmount(value);
-                        }
-                      }}
-                      min={0}
-                      max={profile.tokenBalance}
-                      step={0.01}
-                      placeholder="Enter amount to withdraw"
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleWithdraw}
-                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (profile.tokenBalance || 0)}
-                  >
-                    Withdraw
-                  </Button>
+        <DailyTokens onClaim={onTokensCollected} />
+        {profile.isInfluencer && (
+          <Dialog open={isWithdrawing} onOpenChange={setIsWithdrawing}>
+            <DialogTrigger asChild>
+              <Button disabled={!profile.tokenBalance || profile.tokenBalance <= 0}>
+                Withdraw Tokens
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Withdraw Tokens</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="amount">Amount (Available: {profile.tokenBalance?.toLocaleString()})</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue) && numValue >= 0 && numValue <= (profile.tokenBalance || 0)) {
+                        setWithdrawAmount(value);
+                      }
+                    }}
+                    min={0}
+                    max={profile.tokenBalance}
+                    step={0.01}
+                    placeholder="Enter amount to withdraw"
+                  />
                 </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+                <Button 
+                  onClick={handleWithdraw}
+                  disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (profile.tokenBalance || 0)}
+                >
+                  Withdraw
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   )

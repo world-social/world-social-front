@@ -174,70 +174,65 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center justify-between h-12 px-4">
-          <h1 className="text-xl font-bold">WorldSocial</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowMissions(!showMissions)} className="relative">
-              <Gift className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
-              </span>
-            </Button>
-            <TokenCounter />
-            <Avatar>
-              <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
+      {/* Sticky Header with Icon */}
+      <header className="sticky top-0 z-50 bg-background/20 backdrop-blur-sm border-none h-6">
+        <div className="flex items-center justify-center h-full">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+            <img src="/network-icon.svg" alt="Network Icon" className="w-4 h-4" />
           </div>
         </div>
       </header>
 
-      {/* Missions Panel (Slide Down) */}
+      {/* Remove username section and reduce margin */}
+      <div className="text-center mt-1">
+        {/* Commented out stats */}
+        <div className="flex justify-center space-x-4 text-sm text-muted-foreground">
+          {/* ... existing code ... */}
+        </div>
+      </div>
+
+      {/* Missions Panel - Reduced padding */}
       {showMissions && (
-        <div className="p-4 border-b mt-[88px]">
+        <div className="py-2 px-4 border-b">
           <MissionsPanel />
         </div>
       )}
 
-      {/* Main Content - Adjusted top padding to account for fixed header */}
-      <main className="flex-1 pt-[88px]">
+      {/* Main Content - Adjust viewport height calculation */}
+      <main className="flex-1 pb-[60px]">
         <Tabs defaultValue="feed" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-4 h-10 fixed top-[48px] left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="discover">Discover</TabsTrigger>
-            <TabsTrigger value="ranking">Ranking</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-
-          <div className="mt-[48px]"> {/* Add padding for fixed tabs */}
-            <TabsContent value="feed" className="h-[calc(100vh-136px)]">
+          <div className="mt-0">
+            <TabsContent value="feed" className="h-[calc(100vh-56px)]">
               {/* Feed content */}
-              <div className="px-4">
-                {/* Rest of feed content */}
+              <div className="px-0 h-full overflow-y-auto snap-y snap-mandatory"> {/* Added snap scrolling */}
                 {videos.length === 0 && !loading ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <p className="text-muted-foreground mb-4">No videos found</p>
                     <Button onClick={() => loadMoreVideos()}>Refresh Feed</Button>
                   </div>
                 ) : (
-                  videos.map((video, index) => (
-                    <FeedVideo key={video.id} video={video} onWatchTime={addTokensForWatchTime} index={index} />
-                  ))
+                  <div className="space-y-0"> {/* Removed gap between videos */}
+                    {videos.map((video, index) => (
+                      <div 
+                        key={video.id} 
+                        className="relative w-full h-[calc(100vh-56px)] snap-start snap-always" // Adjusted height calculation
+                      >
+                        <FeedVideo video={video} onWatchTime={addTokensForWatchTime} index={index} />
+                        {/* Remove the gradient overlay since we're using snap scrolling */}
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {/* Loading indicator */}
                 {hasMore && (
                   <div ref={loadingRef} className="py-4 flex justify-center items-center">
-                    {loading ? (
+                    {loading && (
                       <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                        <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }}></div>
                       </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Scroll for more videos</span>
                     )}
                   </div>
                 )}
@@ -245,10 +240,9 @@ export default function HomePage() {
                 {/* End of content message */}
                 {!hasMore && videos.length > 0 && (
                   <div className="py-8 text-center">
-                    <p className="text-muted-foreground">You've reached the end of the feed!</p>
                     <Button
-                      variant="outline"
-                      className="mt-2"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setNextCursor(undefined)
                         setHasMore(true)
@@ -256,48 +250,10 @@ export default function HomePage() {
                         loadMoreVideos()
                       }}
                     >
-                      Refresh Feed
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
                     </Button>
                   </div>
                 )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="discover">
-              <div className="p-4">
-                <h3 className="text-lg font-medium mb-4">Tags em Alta</h3>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {["trending", "viral", "dance", "music", "nature", "fitness", "food", "travel", "gaming"].map((tag) => (
-                    <Badge key={tag} variant="secondary" className="py-1.5 px-3">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-
-                <h3 className="text-lg font-medium mb-4">Criadores Populares</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  {["creator1", "nature_lover", "dance_master", "fitness_guru", "food_lover", "travel_bug"].map(
-                    (creator) => (
-                      <div key={creator} className="flex flex-col items-center">
-                        <Avatar className="h-16 w-16 mb-2">
-                          <AvatarImage src={`/placeholder.svg?height=64&width=64&text=${creator[0]}`} alt={creator} />
-                          <AvatarFallback>{creator[0]}</AvatarFallback>
-                        </Avatar>
-                        <p className="text-sm font-medium">@{creator}</p>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="ranking">
-              <div className="p-4 space-y-6">
-                <LeaderboardPanel />
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">Sua posição atual: 6º lugar</p>
-                  <p className="text-sm">Assista mais vídeos e complete missões para subir no ranking!</p>
-                </div>
               </div>
             </TabsContent>
 
@@ -312,7 +268,11 @@ export default function HomePage() {
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium">Your Videos</h3>
                       <UploadVideoDialog 
-                        onUploadComplete={refreshProfile} 
+                        onUploadComplete={async () => {
+                          await refreshProfile();
+                          await refreshFeed();
+                          window.location.reload();
+                        }} 
                         onFeedRefresh={refreshFeed}
                       />
                     </div>
@@ -336,7 +296,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="mt-6 space-y-6">
-                      <AchievementsPanel />
+                      {/*<AchievementsPanel />*/}
 
                       <div className="mt-6">
                         <h3 className="text-lg font-medium mb-4">Token History</h3>
@@ -344,24 +304,24 @@ export default function HomePage() {
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-sm">Rewards from watching videos</span>
-                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.7).toFixed(2)}</span>
+                              <span className="text-sm font-medium">+{(Number(profile?.tokenBalance || 0) * 0.7).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-sm">Engagement bonus</span>
-                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.1).toFixed(2)}</span>
+                              <span className="text-sm font-medium">+{(Number(profile?.tokenBalance || 0) * 0.1).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-sm">Completed missions</span>
-                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.15).toFixed(2)}</span>
+                              <span className="text-sm font-medium">+{(Number(profile?.tokenBalance || 0) * 0.15).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-sm">Daily bonus</span>
-                              <span className="text-sm font-medium">+{((profile?.tokenBalance ?? 0) * 0.05).toFixed(2)}</span>
+                              <span className="text-sm font-medium">+{(Number(profile?.tokenBalance || 0) * 0.05).toFixed(2)}</span>
                             </div>
                             <div className="h-px bg-border my-2"></div>
                             <div className="flex justify-between items-center font-medium">
                               <span>Total</span>
-                              <span>{(profile?.tokenBalance ?? 0).toFixed(2)}</span>
+                              <span>{Number(profile?.tokenBalance || 0).toFixed(2)}</span>
                             </div>
                           </div>
                         </Card>
@@ -378,6 +338,32 @@ export default function HomePage() {
               )}
             </TabsContent>
           </div>
+
+          {/* Simplified Footer Navigation - Three Icons */}
+          <footer className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <TabsList className="w-full grid grid-cols-3 h-[56px]">
+              <TabsTrigger value="feed" className="flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              </TabsTrigger>
+              <div className="flex items-center justify-center">
+                <UploadVideoDialog 
+                  onUploadComplete={async () => {
+                    await refreshProfile();
+                    await refreshFeed();
+                    window.location.reload();
+                  }} 
+                  onFeedRefresh={refreshFeed}
+                >
+                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </Button>
+                </UploadVideoDialog>
+              </div>
+              <TabsTrigger value="profile" className="flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+              </TabsTrigger>
+            </TabsList>
+          </footer>
         </Tabs>
       </main>
     </div>

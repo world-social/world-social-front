@@ -10,11 +10,12 @@ import { uploadVideo } from "@/lib/video-service"
 import { toast } from "sonner"
 
 interface UploadVideoDialogProps {
-  onUploadComplete: () => Promise<void>
+  onUploadComplete?: () => Promise<void>
   onFeedRefresh?: () => Promise<void>
+  children?: React.ReactNode
 }
 
-export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVideoDialogProps) {
+export function UploadVideoDialog({ onUploadComplete, onFeedRefresh, children }: UploadVideoDialogProps) {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -89,7 +90,7 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
       }
 
       // Refresh profile
-      await onUploadComplete()
+      await handleUploadComplete(videoId)
       
       // Refresh feed if callback is provided
       if (onFeedRefresh) {
@@ -110,13 +111,25 @@ export function UploadVideoDialog({ onUploadComplete, onFeedRefresh }: UploadVid
     setOpen(false)
   }
 
+  const handleUploadComplete = async (videoId: string) => {
+    setOpen(false)
+    if (onUploadComplete) {
+      await onUploadComplete()
+    }
+    if (onFeedRefresh) {
+      await onFeedRefresh()
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Upload
-        </Button>
+        {children || (
+          <Button>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Video
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

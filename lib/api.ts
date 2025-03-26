@@ -32,19 +32,24 @@ export async function apiRequest<T = any>(
     Object.assign(headers, { "Content-Type": "application/json" })
   }
 
+  const url = `${API_BASE_URL}${endpoint}`
+  console.log('Making API request to:', url, 'with options:', options)
+
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(url, {
       ...options,
       headers,
     })
+
+    console.log('API response status:', response.status)
+    const data = await response.json()
+    console.log('API response data:', data)
 
     if (response.status === 429) {
       // Rate limit hit, wait and retry
       await new Promise((resolve) => setTimeout(resolve, 1000))
       return apiRequest(endpoint, options)
     }
-
-    const data = await response.json()
 
     if (!response.ok) {
       throw new Error(data.error || "API request failed")

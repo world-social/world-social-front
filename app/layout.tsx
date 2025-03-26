@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   title: "WorldSocial",
   description: "A social platform for sharing and discovering videos",
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon.svg',
+    apple: '/icon.svg',
   },
 }
 

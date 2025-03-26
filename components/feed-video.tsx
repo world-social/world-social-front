@@ -65,23 +65,46 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
   // Track watch time and reward tokens
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    let lastRewardTime = Date.now();
+
+    console.log('Watch time effect triggered:', {
+      isPlaying,
+      isVisible,
+      isLoaded,
+      videoId: video.id
+    });
 
     if (isPlaying && isVisible && isLoaded) {
+      // Reset last reward time when starting to play
+      lastRewardTime.current = Date.now();
+      console.log('Starting watch time tracking');
+      
       timer = setInterval(async () => {
         const currentTime = Date.now();
-        const elapsedSeconds = (currentTime - lastRewardTime) / 1000;
+        const elapsedSeconds = (currentTime - lastRewardTime.current) / 1000;
+        
+        console.log('Watch time check:', {
+          elapsedSeconds,
+          lastRewardTime: lastRewardTime.current,
+          currentTime
+        });
         
         if (elapsedSeconds >= 5) {
-          const reward = await rewardWatchTime(video.id, elapsedSeconds);
-          onWatchTime(reward);
-          lastRewardTime = currentTime;
+          try {
+            console.log('Attempting to reward watch time');
+            const reward = await rewardWatchTime(video.id, 5);
+            console.log('Watch time reward received:', reward);
+            onWatchTime(reward);
+            lastRewardTime.current = currentTime;
+          } catch (error) {
+            console.error('Error rewarding watch time:', error);
+          }
         }
-      }, 1000);
+      }, 5000);
     }
 
     return () => {
       if (timer) {
+        console.log('Cleaning up watch time timer');
         clearInterval(timer);
       }
     };
@@ -200,6 +223,51 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
             Your browser does not support the video tag.
           </video>
 
+          {/* Always visible controls overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleLike()
+                  }}
+                >
+                  <Heart className={`h-6 w-6 ${isLiked ? "fill-current text-red-500" : ""}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:text-primary"
+                >
+                  <MessageCircle className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:text-primary"
+                >
+                  <Share2 className="h-6 w-6" />
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:text-primary"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleMute()
+                }}
+              >
+                {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Play/Pause Button - Centered */}
           {!isPlaying && isLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="rounded-full bg-background/80 p-4">
@@ -208,27 +276,19 @@ export function FeedVideo({ video, onWatchTime, index }: FeedVideoProps) {
             </div>
           )}
 
-          <div className="absolute bottom-4 left-4 flex gap-2">
-            {isPlaying && (
-              <div className="bg-background/80 rounded-full p-2">
-                <Pause className="h-6 w-6" />
-              </div>
-            )}
-
-            <button
-              className="bg-background/80 rounded-full p-2"
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleMute()
-              }}
-            >
-              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-            </button>
+          {/* User Info - Top Left */}
+          <div className="absolute top-4 left-4 flex items-center space-x-2">
+            <Avatar className="w-8 h-8 border-2 border-white">
+              <AvatarImage src={video.userAvatar} />
+              <AvatarFallback>{video.username[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-white font-medium">{video.username}</span>
           </div>
 
-          <div className="absolute bottom-4 right-4 bg-background/80 rounded-full px-3 py-1.5 text-xs flex items-center">
-            <Coins className="h-3 w-3 mr-1" />
-            <span>+0.1 per 5s watched (max 15 videos/day)</span>
+          {/* Token Reward - Top Right */}
+          <div className="absolute top-4 right-4 flex items-center space-x-1 bg-black/50 px-2 py-1 rounded-full">
+            <Coins className="w-4 h-4 text-yellow-400" />
+            <span className="text-white text-sm">+0.1 per 5s watched</span>
           </div>
         </div>
       </CardContent>
