@@ -54,6 +54,7 @@ const testTokens = {
 
 export function useWST() {
   const [transactionId, setTransactionId] = useState<string>('')
+  const [transactionError, setTransactionError] = useState<string>('')
 
   const client = createPublicClient({
     chain: worldchain,
@@ -92,7 +93,7 @@ export function useWST() {
     ]
 
     const transferDetails = {
-      to: '0x126f7998Eb44Dd2d097A8AB2eBcb28dEA1646AC8',
+      to: '0xbCE15f3E8110b45342d470eB633a8908DE03684D',
       requestedAmount: '10000',
     }
 
@@ -103,16 +104,20 @@ export function useWST() {
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: '0x34afd47fbdcc37344d1eb6a2ed53b253d4392a2f',
+            address: '0xF552c9d5Cb9F6Df6590479d43c4929b69458e4e1',
             abi: WST,
-            functionName: 'signatureTransfer',
-            args: [permitTransferArgsForm, transferDetailsArgsForm, 'PERMIT2_SIGNATURE_PLACEHOLDER_0'],
+            functionName: 'mint',
+            args: [
+              permitTransferArgsForm, 
+              transferDetailsArgsForm, 
+              'PERMIT2_SIGNATURE_PLACEHOLDER_0'
+            ],
           },
         ],
         permit2: [
           {
             ...permitTransfer,
-            spender: '0x34afd47fbdcc37344d1eb6a2ed53b253d4392a2f',
+            spender: '0xbCE15f3E8110b45342d470eB633a8908DE03684D',
           },
         ],
       }) as unknown as SendTransactionResult;
@@ -121,13 +126,15 @@ export function useWST() {
       if (result && result.commandPayload && typeof result.commandPayload === 'object' && 'id' in result.commandPayload) {
         setTransactionId(result.commandPayload.id);
       }
-    } catch (error) {
+    } catch (error: any) {
+      setTransactionError(error);
       console.error("Error sending transaction:", error);
     }
   }
 
   return {
     sendTransaction,
+    transactionError,
     isConfirming,
     isConfirmed
   }

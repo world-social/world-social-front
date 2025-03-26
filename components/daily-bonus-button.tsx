@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Coins } from "lucide-react"
 import { apiRequest } from "@/lib/api"
 import { toast } from "sonner"
+import { useWST } from "@/hooks/use-WST"
 
 interface ClaimStatus {
   canClaim: boolean
   nextClaimTime: number | null
+  signature: string
 }
 
 interface ClaimResponse {
@@ -39,7 +41,9 @@ interface ClaimButtonProps {
 }
 
 export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
-  const [status, setStatus] = useState<ClaimStatus>({ canClaim: false, nextClaimTime: null })
+  const { sendTransaction, isConfirming, isConfirmed } = useWST();
+
+  const [status, setStatus] = useState<ClaimStatus>({ canClaim: false, nextClaimTime: null, signature: "" })
   const [timeLeft, setTimeLeft] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -56,7 +60,8 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
   // Check claim status
   const checkClaimStatus = async () => {
     try {
-      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily-bonus/status')
+      
+      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily/status')
       
       if (response.status === 'error') {
         throw new Error(response.error || 'Failed to check claim status')
@@ -119,6 +124,9 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
 
     setLoading(true)
     try {
+      
+      //call contract here
+
       const response = await apiRequest<ApiResponse<ClaimResponse>>('/tokens/daily-bonus', {
         method: 'POST'
       })
@@ -137,7 +145,8 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
       // Update status with new next claim time
       setStatus({
         canClaim: false,
-        nextClaimTime: response.data.nextClaimTime
+        nextClaimTime: response.data.nextClaimTime,
+        signature: response.data.signature
       })
 
       // Notify parent component

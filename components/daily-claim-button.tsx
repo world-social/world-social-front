@@ -9,6 +9,7 @@ import { toast } from "sonner"
 interface ClaimStatus {
   canClaim: boolean
   nextClaimTime: number | null
+  signature: string
 }
 
 interface ClaimResponse {
@@ -39,7 +40,7 @@ interface ClaimButtonProps {
 }
 
 export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
-  const [status, setStatus] = useState<ClaimStatus>({ canClaim: false, nextClaimTime: null })
+  const [status, setStatus] = useState<ClaimStatus>({ canClaim: false, nextClaimTime: null, signature: ""})
   const [timeLeft, setTimeLeft] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -56,7 +57,7 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
   // Check claim status
   const checkClaimStatus = async () => {
     try {
-      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily-claim/status')
+      const response = await apiRequest<ApiResponse<ClaimStatus>>('/tokens/daily/status')
       
       if (response.status === 'error') {
         throw new Error(response.error || 'Failed to check claim status')
@@ -137,7 +138,8 @@ export function ClaimButton({ className, onClaim }: ClaimButtonProps) {
       // Update status with new next claim time
       setStatus({
         canClaim: false,
-        nextClaimTime: response.data.nextClaimTime
+        nextClaimTime: response.data.nextClaimTime,
+        signature: response.data.signature
       })
 
       // Notify parent component
