@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://world-social-backend-production.up.railway.app"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://world-social-backend.railway.internal"
 
 interface ApiResponse<T = any> {
   status: "success" | "error"
@@ -23,7 +23,7 @@ const defaultOptions: RequestInit = {
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
-    'Origin': typeof window !== 'undefined' ? window.location.origin : ''
+    'Origin': process.env.NEXT_PUBLIC_CORS_ORIGIN || ''
   }
 };
 
@@ -31,7 +31,7 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem("auth_token")
+  const token = await getAuthToken();
   const headers: HeadersInit = {
     ...defaultOptions.headers,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
