@@ -1,3 +1,4 @@
+"use client"
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -7,23 +8,27 @@ import { ThemeProvider } from "@/components/theme-provider"
 import MiniKitProvider from "../providers/minikit-provider"
 import { ErudaProvider } from "../providers/eruda-provider"
 import { SessionProvider } from "@/providers/session-provider"
-
+import { AuthProvider } from "./context/auth-context"
+import { useAuth } from "./context/auth-context"
+import { Header } from "@/components/header"
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "WorldSocial",
-  description: "A social platform for sharing and discovering videos",
-  icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
-  },
-}
+// export const metadata: Metadata = {
+//   title: "WorldSocial",
+//   description: "A social platform for sharing and discovering videos",
+//   icons: {
+//     icon: '/icon.svg',
+//     apple: '/icon.svg',
+//   },
+// }
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { isLoggedIn, logout } = useAuth()
+  
   return (
     
     <html lang="en" suppressHydrationWarning>
