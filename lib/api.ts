@@ -39,6 +39,8 @@ export async function apiRequest<T = any>(
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
+      mode: 'cors'
     })
 
     console.log('API response status:', response.status)
