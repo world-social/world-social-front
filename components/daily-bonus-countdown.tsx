@@ -31,26 +31,40 @@ interface ApiResponseData {
   stats: Stats;
 }
 
-interface DailyTokenStatusResponse {
+type ApiResponse<T> = {
   status: 'success' | 'error';
-  data: {
-    canClaim: boolean;
-    nextClaimTime: number | null;
-  };
+  data: T;
   error?: string;
+}
+
+interface DailyTokenStatusResponse {
+  canClaim: boolean;
+  nextClaimTime: number | null;
+}
+
+interface TokenBalanceResponse {
+  balance: string;
+}
+
+interface DailyTokenClaimResponse {
+  transaction: {
+    id: string;
+    amount: number;
+  };
+  nextClaimTime: number;
 }
 
 interface DailyTokensProps {
   onClaim?: (amount: number) => void
-  tokenBalance?: number
 }
 
-export function DailyTokens({ onClaim, tokenBalance = 0 }: DailyTokensProps) {
+export function DailyTokens({ onClaim }: DailyTokensProps) {
   const [canClaim, setCanClaim] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [nextClaimTime, setNextClaimTime] = useState<string | null>(null)
+  const [tokenBalance, setTokenBalance] = useState<number>(0)
 
   const checkClaimStatus = useCallback(async () => {
     try {
@@ -60,19 +74,35 @@ export function DailyTokens({ onClaim, tokenBalance = 0 }: DailyTokensProps) {
         method: "GET",
       })
 
-      console.log('Daily bonus status response:', response)
-
-      if (!response?.data) {
-        console.error('Response data structure:', response)
-        throw new Error('Invalid response format - missing data')
+      if (!response || response.status === 'error' || !response.data) {
+        throw new Error(response?.error || 'Invalid response format')
       }
 
-      const claimStatus = response.data as { canClaim: boolean; nextClaimTime: number | null }
-      console.log('Claim status:', claimStatus)
+      const { data: statusData } = response
+      console.log('Daily bonus status response:', statusData)
 
-      setCanClaim(claimStatus.canClaim)
-      if (claimStatus.nextClaimTime) {
-        setNextClaimTime(new Date(claimStatus.nextClaimTime).toISOString())
+      setCanClaim(statusData.canClaim)
+      
+      // Get token balance separately since it's not part of the daily status response
+      const balanceResponse = await apiRequest<{ balance: string }>("/tokens/balance", {
+        method: "GET",
+      })
+
+      console.log('Balance response:', balanceResponse)
+
+      if (!balanceResponse) {
+        throw new Error('Failed to get balance')
+      }
+      
+      // Convert string balance to number
+      const numericBalance = parseFloat(balanceResponse.balance)
+      if (isNaN(numericBalance)) {
+        throw new Error('Invalid balance format')
+      }
+      setTokenBalance(numericBalance)
+      
+      if (statusData.nextClaimTime) {
+        setNextClaimTime(new Date(statusData.nextClaimTime).toISOString())
       } else {
         setNextClaimTime(null)
       }
@@ -131,14 +161,17 @@ export function DailyTokens({ onClaim, tokenBalance = 0 }: DailyTokensProps) {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await apiRequest<ApiResponse>("/tokens/daily", {
+      const response = await apiRequest<DailyTokenClaimResponse>("/tokens/daily", {
         method: "POST",
       })
 
-      if (response.status === 'error') {
-        throw new Error(response.error || 'Failed to claim daily bonus')
+      if (!response || response.status === 'error' || !response.data) {
+        throw new Error(response?.error || 'Failed to claim daily bonus')
       }
 
+      const { data: claimData } = response
+      onClaim?.(claimData.transaction.amount)
+      
       setCanClaim(false)
       // Wait a bit before checking status again
       setTimeout(checkClaimStatus, 2000)
@@ -174,7 +207,7 @@ export function DailyTokens({ onClaim, tokenBalance = 0 }: DailyTokensProps) {
         </div>
         
         <div className="space-y-2">
-          <div className="text-2xl font-bold text-primary">{(tokenBalance || 0).toFixed(2)}</div>
+          <div className="text-2xl font-bold text-primary">{tokenBalance.toFixed(2)}</div>
           <p className="text-sm text-muted-foreground">Total Tokens</p>
         </div>
 
