@@ -1,0 +1,11 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://world-social-backend-production.up.railway.app",
+    "NEXT_PUBLIC_WS_URL": "wss://world-social-backend-production.up.railway.app",
+    "NEXT_PUBLIC_ENVIRONMENT": "validation"
+  }
+} 
