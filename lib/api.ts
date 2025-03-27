@@ -22,7 +22,8 @@ const defaultOptions: RequestInit = {
   mode: 'cors',
   headers: {
     'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Origin': typeof window !== 'undefined' ? window.location.origin : ''
   }
 };
 
