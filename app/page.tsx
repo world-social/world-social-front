@@ -20,7 +20,6 @@ import { updateMissionProgress, updateAchievementProgress } from "@/lib/mission-
 import { mockLogin, isAuthenticated } from "@/lib/auth-service"
 import { useProfile } from "@/hooks/use-profile"
 import type { Video } from "@/types/video"
-import { useRouter } from "next/navigation"
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("feed")
@@ -33,35 +32,24 @@ export default function HomePage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement | null>(null)
   const { profile, refreshProfile, withdrawTokens } = useProfile()
-  const router = useRouter()
 
   // Handle authentication
   useEffect(() => {
     const handleAuth = async () => {
       if (!isAuthenticated()) {
         try {
-          // await mockLogin()
-          // setIsLoggedIn(true)
-          router.push('/signup')
+          await mockLogin()
+          setIsLoggedIn(true)
         } catch (error) {
           console.error('Failed to login:', error)
         }
       } else {
         setIsLoggedIn(true)
-        // fetchUserProfile()
-        // .then((data) => {
-        //   setProfile(data);
-        // })
-        // .catch((err) => {
-        //   console.error('Error fetching profile:', err);
-        //   router.push('/register');
-        // })
-        // .finally(() => setLoading(false));
       }
     }
 
     handleAuth()
-  }, [router])
+  }, [])
 
   // Function to add tokens based on watch time
   const addTokensForWatchTime = useCallback(async (seconds: number) => {
@@ -381,4 +369,3 @@ export default function HomePage() {
     </div>
   )
 }
-
