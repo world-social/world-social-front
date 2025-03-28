@@ -40,7 +40,7 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ErudaProvider>
           <SessionProvider>  
-            <MiniKitProvider appId={process.env.NEXT_PUBLIC_APP_ID}>
+            <MiniKitProvider>
               <ThemeProvider>
                 {children}
               </ThemeProvider>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { MiniKit } from "@worldcoin/minikit-js";
-
+import { WorldcoinLogo } from "../ui/worldcoin-logo";
 interface WalletAuthButtonProps {
   onSuccess?: () => void;
 }
@@ -64,21 +64,20 @@ export function WalletAuthButton({ onSuccess }: WalletAuthButtonProps) {
   };
 
   return (
-    <button
+<button
       onClick={handleWalletAuth}
       disabled={isLoading}
-      className="items-center justify-center px-4 py-2 bg-yellow-700 hover:bg-yellow-600 text-white rounded-lg border-2 border-yellow-900/50 font-bold shadow-md transition-colors disabled:opacity-50 tracking-wide"
+      className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
     >
       {isLoading ? (
-        <div className="flex items-center justify-center">
+        <>
           <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="font-serif">Connecting...</span>
-        </div>
+          <span>Connecting...</span>
+        </>
       ) : (
-        <div className="flex items-center">
-          <span className="mr-2">🎰</span>
-          <span className="font-serif">Connect Wallet</span>
-        </div>
+        <>
+          <span>Connect Wallet</span>
+        </>
       )}
     </button>
   );
