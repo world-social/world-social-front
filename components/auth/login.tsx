@@ -104,7 +104,7 @@ export const Login = () => {
               Connecting...
             </>
           ) : (
-            "Connect with Worldcoin"
+            "Connect with World Wallet"
           )}
         </button>
       ) : (
