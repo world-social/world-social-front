@@ -6,7 +6,7 @@ import { MiniKit, type VerifyCommandInput, VerificationLevel, type ISuccessResul
 import { WorldcoinLogo } from "../../components/ui/worldcoin-logo"
 import { Loader2, ShieldCheck } from "lucide-react"
 
-export default function VerifyWorldID() {
+export default function VerifyWorldID({onVerificationSuccess} : { onVerificationSuccess: () => void }) {
   const [isVerifying, setIsVerifying] = useState(false)
   const [verificationError, setVerificationError] = useState<string | null>(null)
   const [verified, setVerified] = useState(false)
@@ -57,9 +57,14 @@ export default function VerifyWorldID() {
             signal: "",
           }),
         })
-
+        console.log("finalPayload", finalPayload)
+        localStorage.setItem("nullifierHash", finalPayload.nullifier_hash as string)
+        localStorage.setItem("root", finalPayload.merkle_root as string)
+        localStorage.setItem("proof", finalPayload.proof as string)
+        console.log("verifyResponse", verifyResponse)
         setVerified(true)
-        router.push("/home-page")
+        onVerificationSuccess()
+        router.push("/signup")
       } catch (error) {
         console.error("Verification error:", error)
         setVerificationError(

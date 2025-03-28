@@ -18,9 +18,11 @@ function generateUUID(): string {
   });
 }
 
-export function SignUpForm({ onRegistered }: {
-  onRegistered: () => void;
-}): React.ReactElement {
+export function SignUpForm(
+  { onRegistered }: {
+    onRegistered: () => void;
+  }
+): React.ReactElement {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,10 +69,10 @@ export function SignUpForm({ onRegistered }: {
         // Store user data
         localStorage.setItem('user', JSON.stringify(response.data.user));
         // Redirect to home page
-        router.push('/');
-        onRegistered();
         // Optionally update state if you need it
         setRegistered(true);
+        onRegistered();
+        router.push('/home-page');
       } else {
         setError(response.error || 'Failed to create account');
       }
@@ -87,11 +89,11 @@ export function SignUpForm({ onRegistered }: {
   };
 
   // If needed, you can trigger onRegistered when the registered state changes:
-  useEffect(() => {
-    if (registered) {
-      onRegistered();
-    }
-  }, [registered, onRegistered]);
+  // useEffect(() => {
+  //   if (registered) {
+  //     onRegistered();
+  //   }
+  // }, [registered, onRegistered]);
 
   return (
     <Card className="w-full max-w-md mx-auto">

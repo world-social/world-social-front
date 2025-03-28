@@ -8,8 +8,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import MiniKitProvider from "../providers/minikit-provider"
 import { ErudaProvider } from "../providers/eruda-provider"
 import { SessionProvider } from "@/providers/session-provider"
-import { AuthProvider } from "./context/auth-context"
-import { useAuth } from "./context/auth-context"
 import { Header } from "@/components/header"
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,7 +25,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isLoggedIn, logout } = useAuth()
   
   return (
     
@@ -42,11 +39,13 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErudaProvider>
-          <MiniKitProvider appId={process.env.NEXT_PUBLIC_APP_ID}>
-            <ThemeProvider>
-              {children}
-            </ThemeProvider>
-          </MiniKitProvider>
+          <SessionProvider>  
+            <MiniKitProvider appId={process.env.NEXT_PUBLIC_APP_ID}>
+              <ThemeProvider>
+                {children}
+              </ThemeProvider>
+            </MiniKitProvider>
+          </SessionProvider>
         </ErudaProvider>
       </body>
     </html>

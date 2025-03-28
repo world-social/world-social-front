@@ -1,5 +1,5 @@
 
-import { AuthProvider, useAuth } from "../app/context/auth-context"
+import { AuthProvider, useAuth } from "../context/auth-context"
 
 export function Header() {
   const { isLoggedIn, logout } = useAuth();
