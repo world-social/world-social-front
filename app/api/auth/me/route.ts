@@ -3,17 +3,17 @@ import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
 // Mock implementation - replace with actual DB call
-async function getUserById(userId: string) {
-    console.log(`Getting user with ID: ${userId}`);
+// async function getUserById(userId: string) {
+//     console.log(`Getting user with ID: ${userId}`);
 
-    return {
-        id: userId,
-        walletAddress: "0x0eb431cd91e7abbd29a204b2edf33636ad45ed08",
-        username: "lemike.1234",
-        profilePictureUrl: "https://i.pravatar.cc/150?img=1",
-        isNewUser: false
-    };
-}
+//     return {
+//         id: userId,
+//         walletAddress: "0x0eb431cd91e7abbd29a204b2edf33636ad45ed08",
+//         username: "mock_user",
+//         profilePictureUrl: "https://i.pravatar.cc/150?img=1",
+//         isNewUser: false
+//     };
+// }
 
 export async function GET() {
     try {
@@ -39,11 +39,11 @@ export async function GET() {
             }, { status: 401 });
         }
 
-        const user = await getUserById(payload.userId as string);
+        // const user = await getUserById(payload.userId as string);
         
         return NextResponse.json({
             authenticated: true,
-            user: user
+            // user: user
         });
     } catch (error) {
         console.error('Auth error:', error);

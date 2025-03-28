@@ -1,114 +1,125 @@
 "use client";
+
+import { useState } from "react";
+import { Shield } from "lucide-react";
 import {
   MiniKit,
+  VerifyCommandInput,
   VerificationLevel,
   ISuccessResult,
-  MiniAppVerifyActionErrorPayload,
-  IVerifyResponse,
 } from "@worldcoin/minikit-js";
-import { useCallback, useState, useEffect } from "react";
-import { Button } from "@worldcoin/mini-apps-ui-kit-react";
+import { useRouter } from "next/navigation";
 
-export type VerifyCommandInput = {
-  action: string;
-  signal?: string;
-  verification_level?: VerificationLevel; // Default: Orb
-};
+interface VerifyButtonProps {
+  onVerificationSuccess: () => void;
+}
 
-const verifyPayload: VerifyCommandInput = {
-  action: "test-action-2", // This is your action ID from the Developer Portal
-  signal: "",
-  verification_level: VerificationLevel.Device, // Orb | Device
-};
-
-export const VerifyBlock = ({ onVerified }: { onVerified: () => void }) => {
-  const [handleVerifyResponse, setHandleVerifyResponse] = useState<
-    MiniAppVerifyActionErrorPayload | IVerifyResponse | null
-  >(null);
-  const [verified, setVerified] = useState<boolean>(false);
-
-  const handleVerify = useCallback(async () => {
-    if (!MiniKit.isInstalled()) {
-      console.warn("Tried to invoke 'verify', but MiniKit is not installed.");
+export function VerifyButton({ onVerificationSuccess }: VerifyButtonProps) {
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(
+    null
+  );
+  const router = useRouter()
+  const handleVerify = async () => {
+    // Don't start verification if it's already in progress
+    if (isVerifying) {
+      console.log("Verification already in progress");
       return;
     }
 
-    const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
-
-    // no need to verify if command errored
-    if (finalPayload.status === "error") {
-      console.log("Command error");
-      console.log(finalPayload);
-
-      setHandleVerifyResponse(finalPayload);
-      return finalPayload;
+    if (!MiniKit.isInstalled()) {
+      setVerificationError("World App is not installed");
+      return;
     }
 
-    // Verify the proof in the backend
-    const verifyResponse = await fetch(`/api/verify`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        payload: finalPayload as ISuccessResult, // Parses only the fields we need to verify
-        action: verifyPayload.action,
-        signal: verifyPayload.signal, // Optional
-      }),
-    });
+    try {
+      console.log("Starting verification process");
+      setIsVerifying(true);
+      setVerificationError(null);
 
-    // TODO: Handle Success!
-    const verifyResponseJson = await verifyResponse.json();
+      const verifyPayload: VerifyCommandInput = {
+        action: process.env.NEXT_PUBLIC_WLD_ACTION_ID || "web3-template",
+        signal: "",
+        verification_level: VerificationLevel.Device,
+      };
 
-    if (verifyResponseJson.status === 200) {
-      console.log("Verification success!");
-      console.log(finalPayload);
-      setVerified(true);
+      // Use async approach with commandsAsync
+      console.log("Using async verification approach");
+
+      // Ensure the MiniKit is correctly initialized before using it
+      if (
+        !MiniKit.commandsAsync ||
+        typeof MiniKit.commandsAsync.verify !== "function"
+      ) {
+        throw new Error(
+          "MiniKit.commandsAsync.verify is not available. Make sure you're using the latest version of the MiniKit library."
+        );
+      }
+
+      // Execute the verify command and wait for the result
+      const { finalPayload } = await MiniKit.commandsAsync.verify(
+        verifyPayload
+      );
+
+      if (finalPayload.status === "error") {
+        console.log("Error payload", finalPayload);
+        setVerificationError(`Verification failed: Please try again`);
+        setIsVerifying(false);
+        return;
+      }
+
+      try {
+        const verifyResponse = await fetch("/api/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            payload: finalPayload as ISuccessResult,
+            action: process.env.NEXT_PUBLIC_WLD_ACTION_ID || "web3-template",
+            signal: "",
+          }),
+        });
+
+        setIsVerifying(false);
+        setVerificationError(null);
+        onVerificationSuccess();
+      } catch (error) {
+        console.error("Server verification error:", error);
+        setVerificationError(
+          error instanceof Error
+            ? `Verification error: ${error.message}`
+            : "Unknown verification error occurred"
+        );
+      }
+
+      // Process successful verification
+      //   await verifyOnServer(finalPayload as ISuccessResult);
+    } catch (error) {
+      console.error("Verification error:", error);
+      setVerificationError(
+        error instanceof Error
+          ? `Verification error: ${error.message}`
+          : "Unknown verification error occurred"
+      );
+      setIsVerifying(false);
     }
+  };
 
-    setHandleVerifyResponse(verifyResponseJson);
-    return verifyResponseJson;
-  }, []);
-
-  // Call the onVerified callback when verified becomes true
-  useEffect(() => {
-    if (verified) {
-      onVerified();
-    }
-  }, [verified, onVerified]);
-  
   return (
-    <div className="flex flex-col items-center">
-      {!handleVerifyResponse ? (
-        <Button 
-          onClick={handleVerify}
-        >
-          Verify with World ID
-        </Button>
-      ) : (
-        <div className="flex flex-col items-center space-y-2">
-          {verified ? (
-            <>
-              <div className="text-green-600 font-medium">✓ Verified</div>
-              <div className="bg-gray-100 p-4 rounded-md max-w-md overflow-auto">
-                <pre className="text-xs">{JSON.stringify(handleVerifyResponse, null, 2)}</pre>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-red-600 font-medium">✗ Verification Failed</div>
-              <div className="bg-gray-100 p-4 rounded-md max-w-md overflow-auto">
-                <pre className="text-xs">{JSON.stringify(handleVerifyResponse, null, 2)}</pre>
-              </div>
-            </>
-          )}
-          <Button
-            onClick={() => setHandleVerifyResponse(null)}
-          >
-            Try Again
-          </Button>
-        </div>
+    <>
+      {verificationError && (
+        <div className="text-red-500 text-sm mb-2">{verificationError}</div>
       )}
-    </div>
+
+      <button
+        onClick={handleVerify}
+        disabled={isVerifying}
+        className="w-full max-w-xs px-8 py-4 bg-blue-500 text-white font-medium text-lg rounded-xl shadow-sm hover:bg-blue-600 active:bg-blue-700 transition-colors touch-manipulation flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+      >
+        <Shield className="w-5 h-5" />
+        {isVerifying ? "Verifying..." : "Verify to Claim"}
+      </button>
+    </>
   );
-};
+}

@@ -64,7 +64,7 @@ export function useWST() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     client,
     appConfig: {
-      app_id: process.env.MINIKIT_APP_ID as string,
+      app_id: process.env.NEXT_PUBLIC_APP_ID as string,
     },
     transactionId: transactionId,
   })

@@ -2,7 +2,7 @@
 import { MiniKit, WalletAuthInput } from "@worldcoin/minikit-js";
 import { Button } from "@worldcoin/mini-apps-ui-kit-react";
 import { useCallback, useEffect, useState } from "react";
-
+import { useRouter } from "next/navigation";
 const walletAuthInput = (nonce: string): WalletAuthInput => {
     return {
         nonce,
@@ -22,7 +22,7 @@ type User = {
 export const Login = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(false);
-    
+    const router = useRouter()
     const refreshUserData = useCallback(async () => {
         try {
             const response = await fetch('/api/auth/me');
@@ -66,6 +66,7 @@ export const Login = () => {
 
                 if (response.status === 200) {
                     setUser(MiniKit.user)
+                    router.push('/verify-world-id')
                 }
                 setLoading(false);
             }

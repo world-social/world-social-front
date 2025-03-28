@@ -3,8 +3,10 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import MiniKitProvider from "../components/providers/minikit-provider"
-import { ErudaProvider } from "../components/providers/eruda"
+
+import MiniKitProvider from "../providers/minikit-provider"
+import { ErudaProvider } from "../providers/eruda-provider"
+import { SessionProvider } from "@/providers/session-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -35,7 +37,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErudaProvider>
-          <MiniKitProvider appId={process.env.MINIKIT_APP_ID}>
+          <MiniKitProvider appId={process.env.NEXT_PUBLIC_APP_ID}>
             <ThemeProvider>
               {children}
             </ThemeProvider>
