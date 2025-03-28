@@ -351,6 +351,7 @@ export default function HomePage() {
 
           {/* Footer Navigation */}
           <footer className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Tabs defaultValue="feed" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="w-full grid grid-cols-3 h-[56px]">
               <TabsTrigger value="feed" className="flex items-center justify-center">
                 <svg
@@ -412,6 +413,7 @@ export default function HomePage() {
                 </svg>
               </TabsTrigger>
             </TabsList>
+          </Tabs>
           </footer>
         </div>
       {/* )} */}

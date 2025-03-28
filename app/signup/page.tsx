@@ -9,11 +9,11 @@ export default function TwoStepRegistration() {
   const [isRegistered, setIsRegistered] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    if (isRegistered) {
-      router.push('/home-page');
-    }
-  }, [isRegistered, router]);
+  // useEffect(() => {
+  //   if (isRegistered) {
+  //     router.push('/home-page');
+  //   }
+  // }, [isRegistered, router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
