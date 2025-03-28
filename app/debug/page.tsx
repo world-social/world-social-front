@@ -18,11 +18,7 @@ function generateUUID(): string {
   });
 }
 
-export function SignUpForm(
-  { onRegistered }: {
-    onRegistered: () => void;
-  }
-): React.ReactElement {
+export default function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +67,6 @@ export function SignUpForm(
         // Redirect to home page
         // Optionally update state if you need it
         setRegistered(true);
-        onRegistered();
         router.push('/home-page');
       } else {
         setError(response.error || 'Failed to create account');

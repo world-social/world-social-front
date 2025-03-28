@@ -1,27 +1,31 @@
+"use client"
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import MiniKitProvider from "../components/providers/minikit-provider"
-import { ErudaProvider } from "../components/providers/eruda"
 
+import MiniKitProvider from "../providers/minikit-provider"
+import { ErudaProvider } from "../providers/eruda-provider"
+import { SessionProvider } from "@/providers/session-provider"
+import { Header } from "@/components/header"
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "WorldSocial",
-  description: "A social platform for sharing and discovering videos",
-  icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
-  },
-}
+// export const metadata: Metadata = {
+//   title: "WorldSocial",
+//   description: "A social platform for sharing and discovering videos",
+//   icons: {
+//     icon: '/icon.svg',
+//     apple: '/icon.svg',
+//   },
+// }
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  
   return (
     
     <html lang="en" suppressHydrationWarning>
@@ -35,11 +39,13 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErudaProvider>
-          <MiniKitProvider appId={process.env.MINIKIT_APP_ID}>
-            <ThemeProvider>
-              {children}
-            </ThemeProvider>
-          </MiniKitProvider>
+          <SessionProvider>  
+            <MiniKitProvider>
+              <ThemeProvider>
+                {children}
+              </ThemeProvider>
+            </MiniKitProvider>
+          </SessionProvider>
         </ErudaProvider>
       </body>
     </html>

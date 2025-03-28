@@ -64,7 +64,7 @@ export function useWST() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     client,
     appConfig: {
-      app_id: process.env.MINIKIT_APP_ID as string,
+      app_id: process.env.NEXT_PUBLIC_APP_ID as string,
     },
     transactionId: transactionId,
   })
@@ -104,7 +104,7 @@ export function useWST() {
       const result = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: '0xF552c9d5Cb9F6Df6590479d43c4929b69458e4e1',
+            address: '0xF552c9d5Cb9F6Df6590479d43c4929b69458e4e1' as `0x${string}`,
             abi: WST,
             functionName: 'mint',
             args: [

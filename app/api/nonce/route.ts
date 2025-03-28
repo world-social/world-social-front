@@ -1,12 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-export function GET(req: NextRequest) {
-    // Expects only alphanumeric characters
-    const nonce = crypto.randomUUID().replace(/-/g, "");
+export async function GET() {
+  // Generate a nonce that matches the pattern requirements
+  // Must be at least 8 alphanumeric characters according to docs
+  // Using a UUID without dashes should satisfy this
+  const uuid = crypto.randomUUID().replace(/-/g, "");
 
-    // The nonce should be stored somewhere that is not tamperable by the client
-    // Optionally you can HMAC the nonce with a secret key stored in your environment
-    cookies().set("siwe", nonce, { secure: true });
-    return NextResponse.json({ nonce });
+  // Create response with the nonce
+  const response = NextResponse.json({ nonce: uuid });
+
+  // Set the cookie on the response
+  response.cookies.set({
+    name: "siwe",
+    value: uuid,
+    secure: true,
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 3600, // 1 hour
+  });
+
+  return response;
 }
